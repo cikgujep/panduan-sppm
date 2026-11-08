@@ -398,6 +398,45 @@ nav.side a .tick{display:inline-grid}
   a{color:inherit;text-decoration:none}
   .explain{gap:3mm}
 }
+
+/* ===== Cetakan A4: saiz fon seragam (pt) ===== */
+@media print{
+  body{font-size:10pt!important}
+  .hero p,.lead,.ex-30 p{font-size:11pt!important;line-height:1.45}
+  main p,main li,.warn-item,.ask,.callout,.ex-box p,.ex-script,.myth-q .txt,.myth-a p,.pcard p,.ck span,.steps li div{font-size:10pt!important;line-height:1.45}
+  .mod-head h2,#gp h2,#prinsip h2,#mitos h2,#semak h2{font-size:15pt!important}
+  .pcard h3,.ex-box .lbl,.ex-30 .lbl,.ck-h{font-size:10.5pt!important}
+  main h3{font-size:11pt!important}
+  .mod-head .q{font-size:9.5pt!important}
+  table th{font-size:8pt!important}table td{font-size:9.5pt!important}
+  .print-spots,.print-spots li{font-size:9pt!important}
+  .shot-cap{font-size:8.5pt!important}
+  .steps{gap:1.5mm!important}.steps li{grid-template-columns:22px 1fr!important}.steps li::before{width:18px!important;height:18px!important;font-size:8pt!important}
+  .warn-item b{font-size:10pt!important}
+  .tag,.pill{font-size:7.5pt!important}
+  .kpi small{font-size:8pt!important}.kpi strong{font-size:15pt!important}
+  .ex-viz{display:block!important;break-inside:avoid;padding:3mm!important;background:#fff!important}
+  .ex-viz .chipbtns,.ex-viz .flow-new,.ex-cap{display:none!important}
+  .ex-viz h3{font-size:10pt!important}
+  .nm-svg{max-width:120mm!important}
+  .ruler{height:100px!important;margin-bottom:28px!important}
+  .stack{height:48px!important}.stack button{font-size:9pt!important}
+  .scale div{font-size:9pt!important}.scale small{font-size:7pt!important}
+  .glossary td,#glossary td{font-size:9pt!important}
+}
+
+/* ===== Cetakan A4: aliran berterusan, tiada halaman separuh kosong ===== */
+@media print{
+  #gp,#modules section.mod,#mitos,#semak{break-before:auto!important}
+  #modules section.mod,#gp,#mitos,#semak{border-top:2px solid #111!important;padding-top:4mm!important;margin-top:7mm!important}
+  .mod-head{break-after:avoid!important;break-inside:avoid}
+  .mod-head + .tabs + .panel,.panel[data-label]::before{break-after:avoid}
+  .panel{break-before:auto}
+  main{padding-right:2px!important}
+  .hero p,.lead,.ex-30 p{font-size:10.5pt!important}
+  .shot-wrap{break-inside:avoid}
+}
+@media print{.shot-wrap{break-inside:auto!important}.shot{break-inside:avoid}.shot img{max-height:150mm!important}.shot-cap{break-after:avoid}}
 </style>
 </head>
 <body>
@@ -522,7 +561,7 @@ const MODS=[
 {id:"utama",title:"Analisis HC (Utama)",where:"Utama",grp:"Paparan Utama",q:"Adakah kita di landasan untuk mencapai target?",
  sum:`<p class="lead">Jawapannya ada pada <b>jarak</b> antara GP semasa dengan GP ETR, dan <b>arah trend</b> merentas peperiksaan.</p>
  <p>Paparan ini mengandungi empat kad (Jumlah Calon, Lulus, Gagal, GP Semasa berbanding Target), kad GP bagi setiap peperiksaan dengan anak panah, graf taburan gred, dan graf trend "Pencapaian Semasa" berbanding garis "Sasaran" (OTR).</p>
- <div class="tbl"><table><thead><tr><th>Contoh: GP Bahasa Melayu</th><th class="n">TOV</th><th class="n">AR1</th><th class="n">AR2</th><th class="n">ETR</th></tr></thead><tbody><tr><td>GP</td><td class="n">5.25</td><td class="n">5.13</td><td class="n">4.88</td><td class="n">3.51</td></tr></tbody></table></div>`,
+ <div class="tbl"><table><thead><tr><th>Contoh: GP Bahasa Melayu</th><th class="n">TOV</th><th class="n">AR1</th><th class="n">AR2</th><th class="n">AR3</th><th class="n">ETR</th><th class="n">SPM</th></tr></thead><tbody><tr><td>GP</td><td class="n">5.25</td><td class="n">5.13</td><td class="n">4.88</td><td class="n">4.63</td><td class="n">3.51</td><td class="n">4.26</td></tr></tbody></table></div>`,
  steps:["Pilih <b>satu subjek</b> dan <b>satu peperiksaan</b> dahulu supaya angka mewakili murid sebenar.","Bandingkan GP Semasa dengan Target (GP ETR). Kad bertanda \"Capai\" atau \"+jurang\".","Lihat anak panah pada kad setiap peperiksaan: <span class='pill good'>hijau</span> = GP turun = baik.","Buka graf taburan gred untuk melihat berapa murid di D dan E, bukan sekadar lulus."],
  warn:[["Subjek = Semua: Lulus/Gagal ikut rekod","Jumlah Calon menunjukkan bilangan murid, tetapi Lulus/Gagal dikira ikut rekod markah (contoh: 704 rekod lulus daripada 891 rekod). Label bertukar kepada \"Rekod Lulus/Gagal\"."],["Bulatan = kemajuan dari TOV ke target","(GP TOV − GP semasa) ÷ (GP TOV − GP target). 0% = masih di TOV, 100% = capai target. Jangan kira dari GP 9 (terburuk): cara itu memberi peratus yang terlalu tinggi."],["Lulus termasuk D dan E","82.9% lulus boleh menyembunyikan ramai murid di sempadan."],["TH tidak dikira gagal","TH yang tinggi membuat peratus lulus nampak lebih baik."]],
  ask:"Berapa GP lagi perlu diturunkan? Adakah kadar sekarang mencukupi? Subjek dan kelas mana menyumbang paling banyak kepada jurang?",
@@ -552,10 +591,10 @@ const MODS=[
  sum:`<p class="lead">Graf ini menunjukkan sama ada murid berkumpul di tengah, terbahagi kepada <b>dua kumpulan</b>, atau tertumpu di bawah.</p>
  <p>Setiap peperiksaan ialah satu lengkung (markah dalam selang 10). Lengkung "Benchmark" dibina daripada purata dan sisihan piawai <b>semua</b> peperiksaan yang dipaparkan. Kad statistik dikira semula apabila anda sembunyikan peperiksaan pada legenda.</p>`,
  steps:["Pilih satu subjek.","Baca kad statistik: purata dan sisihan piawai dikira <b>tanpa ETR</b> (target). Klik nama peperiksaan pada legenda untuk banding satu-satu.","Lihat sama ada ada <b>dua bonggol</b>: tanda dua kumpulan berbeza.","Bandingkan ekor kiri (murid lemah) antara peperiksaan: adakah ia ikut bergerak?"],
- warn:[["ETR ialah target, bukan pencapaian","Dashboard mengecualikan ETR daripada Benchmark dan kad statistik. Jika ETR dicampur, purata akan naik (51.57 berbanding 48.78) walaupun tiada murid yang bertambah baik."],["\"Analisis Bentuk\" hanya ikut purata","≥65 = \"Condong Kiri\", ≤40 = \"Condong Kanan\". Ini bukan ukuran kepencongan sebenar."],["Sisihan piawai besar = jurang dalam kelas","Satu kaedah PdP mungkin tidak sesuai untuk semua."]],
+ warn:[["ETR ialah target, bukan pencapaian","Dashboard mengecualikan ETR daripada Benchmark dan kad statistik. Jika ETR dicampur, purata akan naik (51.53 berbanding 49.42) walaupun tiada murid yang bertambah baik."],["\"Analisis Bentuk\" hanya ikut purata","≥65 = \"Condong Kiri\", ≤40 = \"Condong Kanan\". Ini bukan ukuran kepencongan sebenar."],["Sisihan piawai besar = jurang dalam kelas","Satu kaedah PdP mungkin tidak sesuai untuk semua."]],
  ask:"Adakah seluruh lengkung bergerak ke kanan, atau hanya murid yang sudah baik? Adakah wujud dua kumpulan yang perlukan strategi berbeza?",
  lab:`<h3>Cuba: pilih peperiksaan yang dipaparkan (Matematik)</h3><div class="row" id="nmBox"></div><div class="kpis"><div class="kpi"><small>Purata jika dicampur</small><strong id="nmM">–</strong></div><div class="kpi"><small>Label "Analisis Bentuk"</small><strong id="nmL" style="font-size:16px">–</strong></div></div><div class="callout" id="nmNote"></div>`,
- init(){const D=[["TOV",112,47.9],["AR1",112,48.3],["AR2",110,50.1],["ETR",112,59.9]];nmBox.innerHTML=D.map((d,i)=>`<label class="ck" style="border:0;padding:4px 10px 4px 0"><input type="checkbox" data-i="${i}" checked><span>${d[0]} <small style="color:var(--muted)">(purata ${d[2]})</small></span></label>`).join('');
+ init(){const D=[["TOV",112,47.9],["AR1",112,48.3],["AR2",110,50.1],["AR3",110,51.4],["ETR",112,59.9]];nmBox.innerHTML=D.map((d,i)=>`<label class="ck" style="border:0;padding:4px 10px 4px 0"><input type="checkbox" data-i="${i}" checked><span>${d[0]} <small style="color:var(--muted)">(purata ${d[2]})</small></span></label>`).join('');
    const f=()=>{let n=0,s=0,etr=false;nmBox.querySelectorAll('input').forEach(c=>{if(c.checked){const d=D[c.dataset.i];n+=d[1];s+=d[1]*d[2];if(d[0]==='ETR')etr=true}});if(!n){nmM.textContent='–';nmL.textContent='–';nmNote.textContent='Pilih sekurang-kurangnya satu.';return}const m=s/n;nmM.textContent=m.toFixed(1);nmL.textContent=m>=65?'Condong Kiri':m<=40?'Condong Kanan':'Normal / Sederhana';
    nmNote.innerHTML=etr?'<b>ETR dicampur:</b> purata naik kerana target bukan pencapaian. Sebab itu Dashboard tidak mencampurkan ETR.':'Tanpa ETR: inilah purata pencapaian sebenar, sama seperti yang dipaparkan Dashboard.'};nmBox.onchange=f;f()},
  quiz:{q:"Graf markah mempunyai dua bonggol yang jelas. Apa tindakan terbaik?",opts:["Laporkan purata keseluruhan","Tapis mengikut kelas atau aliran untuk melihat dua kumpulan itu","Abaikan, ia kebetulan"],ans:1,exp:"Dua bonggol bermaksud dua kumpulan berbeza (contohnya aliran sains dan sastera). Purata tunggal menyembunyikan kedua-duanya."}},
@@ -689,8 +728,9 @@ utama:[{img:'img/utama.jpg',cap:'Paparan Utama · Bahasa Melayu · AR2',spots:[
  [40.3,26.3,'Lulus termasuk D dan E','92 lulus (82.9%) termasuk murid gred D dan E yang berada di sempadan.'],
  [88.7,21.4,'Bulatan = kemajuan dari TOV','21%: GP sudah bergerak 21% daripada jarak TOV (5.25) ke target (3.51). Masih ada 79% jarak lagi.'],
  [25.8,45,'Kad setiap peperiksaan','Anak panah hijau bermaksud GP turun, iaitu prestasi naik berbanding peperiksaan sebelumnya.'],
- [37.1,78.2,'Pencapaian vs Sasaran','Garis biru (sebenar) makin jauh dari garis merah putus-putus (OTR). Sekolah makin ketinggalan dari landasan target.'],
- [85.5,68.5,'Taburan gred','19 murid G dan 21 murid D/E. Peratus lulus 82.9% menyembunyikan 40 murid yang berisiko.']]}],
+ [40.3,88,'Pencapaian vs Sasaran','Garis biru (sebenar) makin jauh dari garis merah putus-putus (OTR). Sekolah makin ketinggalan dari landasan target.'],
+ [85.5,68.5,'Taburan gred','19 murid G dan 21 murid D/E. Peratus lulus 82.9% menyembunyikan 40 murid yang berisiko.'],
+ [91.9,45,'Kad SPM','Keputusan SPM sebenar (gred). Anak panah membandingkan SPM dengan AR3, iaitu peperiksaan sebenar terakhir, bukan dengan ETR target. Jika tiada data, kad memaparkan –.']]}],
 matriks:[{img:'img/matriks.jpg',cap:'Matriks Pencapaian · Matematik · TOV → AR2',spots:[
  [82.3,5.8,'Mula dan Akhir','Pilih OTR1/OTR2 sebagai "Akhir" untuk menyemak sama ada murid berada di tempat sepatutnya, bukan sekadar bergerak.'],
  [13.3,37.4,'Cara baca paksi','Lajur (melintang) = gred TOV. Baris (menegak) = gred AR2.'],
@@ -699,23 +739,24 @@ matriks:[{img:'img/matriks.jpg',cap:'Matriks Pencapaian · Matematik · TOV → 
  [88.7,60.5,'Ringkasan pergerakan','41 naik, 50 kekal, 19 merosot. Hampir separuh murid tidak bergerak gred langsung.'],
  [92.7,86.6,'TH / tidak setara','2 murid tidak hadir dalam salah satu peperiksaan. Mereka tidak dikira Meningkat atau Merosot kerana perbandingannya tidak setara.']]}],
 normaliti:[{img:'img/normaliti.jpg',cap:'Taburan Normal · Matematik',spots:[
- [26.6,30.1,'Legenda boleh diklik','Klik nama peperiksaan untuk sembunyi atau papar lengkungnya. Kad statistik dikira semula.'],
- [37.9,39,'Puncak TOV di 40','Ramai murid berkumpul betul-betul di sempadan lulus. Sedikit gerakan boleh mengubah peratus lulus dengan besar.'],
- [80.6,39,'Lengkung Benchmark','Taburan normal teori daripada pencapaian sebenar (tanpa ETR). Lengkung peperiksaan yang lari jauh dari bentuk ini perlu disiasat.'],
- [29,90.9,'Purata tanpa ETR','48.78 ialah purata pencapaian sebenar. ETR ialah target, jadi tidak dicampur dalam purata ini.'],
- [61.3,90.9,'Sisihan piawai','17.61: kebanyakan murid tersebar kira-kira 18 markah di atas dan bawah purata. Satu kaedah PdP mungkin tidak sesuai untuk semua.'],
- [93.5,90.9,'Analisis Bentuk','Label ini hanya berdasarkan purata (40–65 = "Normal / Sederhana"), bukan bentuk graf sebenar.']]}],
+ [20.2,28.5,'Legenda boleh diklik','Klik nama peperiksaan untuk sembunyi atau papar lengkungnya. Kad statistik dikira semula.'],
+ [37.9,36.8,'Puncak TOV di 40','Ramai murid berkumpul betul-betul di sempadan lulus. Kenaikan atau penurunan beberapa markah sahaja sudah cukup untuk memindahkan mereka melintasi garis 40, jadi peratus lulus boleh berubah banyak walaupun purata hampir sama.'],
+ [80.6,36.8,'Lengkung Benchmark','Taburan normal teori daripada pencapaian sebenar (tanpa ETR). Lengkung peperiksaan yang lari jauh dari bentuk ini perlu disiasat.'],
+ [41.9,79.3,'Lengkung SPM','SPM hanya ada gred, jadi markah proksi digunakan (cth G = 20, A+ = 95). Sebab itu bentuknya berbonggol pelik. Jangan bandingkan bentuk SPM dengan peperiksaan lain.'],
+ [29,91.7,'Purata tanpa ETR','49.42 ialah purata pencapaian sebenar. ETR (target) dan SPM (markah proksi) tidak dicampur dalam purata ini.'],
+ [61.3,91.7,'Sisihan piawai','18.61: kebanyakan murid tersebar kira-kira 19 markah di atas dan bawah purata. Satu kaedah PdP mungkin tidak sesuai untuk semua.'],
+ [93.5,91.7,'Analisis Bentuk','Label ini hanya berdasarkan purata (40–65 = "Normal / Sederhana"), bukan bentuk graf sebenar.']]}],
 gpmp:[{img:'img/gpmp.jpg',cap:'Banding GPMP · semua subjek',spots:[
  [56.5,4.9,'Simulasi','Pilih +1 gred, +10 markah dan lain-lain untuk menguji sama ada target realistik. Nombor bertukar merah.'],
- [29.8,24.9,'Kad OTR','Target pertengahan yang dikira dari TOV ke ETR. Bandingkan AR1 dengan OTR1, AR2 dengan OTR2.'],
+ [23,24.9,'Kad OTR','Target pertengahan yang dikira dari TOV ke ETR. Bandingkan AR1 dengan OTR1, AR2 dengan OTR2, AR3 dengan OTR3.'],
  [16.1,46.6,'Klik nama subjek','Membuka graf trend subjek itu.'],
- [83.9,42.2,'Anak panah dalam lajur','Hijau = GP turun (baik). Merah = GP naik (merosot). Contoh: Pendidikan Islam 4.06 → 4.10 merosot walaupun GP-nya antara yang terbaik.'],
+ [67.3,42.2,'Anak panah dalam lajur','Hijau = GP turun (baik). Merah = GP naik (merosot). Contoh: Pendidikan Islam 4.06 → 4.10 dalam AR2 (merosot), kemudian pulih ke 4.01 dalam AR3.'],
  [96,42.2,'Lajur ETR','Kira jarak AR2 ke ETR bagi setiap baris. Subjek dengan GP baik tidak semestinya paling hampir dengan targetnya.']]},
  {img:'img/gred.jpg',cap:'Analisis Gred · Matematik',spots:[
- [27.4,57.3,'GPMP setiap peperiksaan','6.48 → 6.29 → 6.05. Bertambah baik, tetapi masih jauh dari ETR 4.67.'],
- [73.3,57.3,'Lajur D dan E','19 murid di D/E dalam AR2. Mereka dikira lulus tetapi mudah jatuh ke G.'],
- [81.4,57.3,'Lajur G','36 → 40 → 33. G naik dalam AR1 sebelum turun. Satu titik tidak menceritakan semuanya.'],
- [87.6,57.3,'TH','2 murid tidak hadir AR2.']]}],
+ [27.4,50.2,'GPMP setiap peperiksaan','6.48 → 6.29 → 6.05 → 5.72 (AR3), dan SPM 5.50. Bertambah baik, tetapi masih jauh dari ETR 4.67.'],
+ [73.3,50.2,'Lajur D dan E','19 murid di D/E dalam AR2. Mereka dikira lulus tetapi mudah jatuh ke G.'],
+ [81.4,50.2,'Lajur G','36 → 40 → 33 → 34 → 28 (SPM). G naik dalam AR1 dan AR3 sebelum turun. Satu titik tidak menceritakan semuanya.'],
+ [87.6,50.2,'TH','2 murid tidak hadir AR2 dan 2 murid tidak hadir AR3.']]}],
 grisk:[{img:'img/grisk.jpg',cap:'Analisis Risiko G-Risk · Matematik · AR2',spots:[
  [96,3.6,'Mod 3-Tier / 4-Tier','Mengubah cara murid G dipecahkan. Gunakan 4-Tier jika ramai murid sangat lemah.'],
  [50,16.3,'Definisi FDI','"Lagi tinggi FDI, lagi ramai calon hampir lulus". Nama "Fail Density" mengelirukan: nilai tinggi ialah berita baik.'],
@@ -765,12 +806,13 @@ individu:[{img:'img/rumusan.jpg',cap:'Rumusan Keseluruhan · AR2',spots:[
  [64.5,31.9,'Sel TH (kelabu)','Subjek TH tidak dikira dalam GP individu murid.'],
  [96.8,36.7,'GP individu','Disusun dari terbaik. Semua subjek diberi berat sama, jadi bandingkan murid dalam aliran yang sama.']]},
  {img:'img/profil.jpg',cap:'Profil Murid · contoh murid 5 DEDIKASI',spots:[
- [24.2,9.3,'Pilih murid','Pilih tingkatan, kelas, kemudian murid.'],
- [68.5,16.6,'Cetak PDF','PDF individu atau seluruh kelas, untuk perjumpaan dengan murid atau ibu bapa.'],
- [17.5,25.9,'Label VARK','Label isian guru. Gunakan untuk variasi PdP, bukan sebagai sebab murid lemah.'],
- [43.7,58.6,'AR1 30 vs OTR1 46','Murid ini 16 markah di bawah sasaran pertengahan dalam BM.'],
- [74.2,59.3,'AR2 24 vs OTR2 49','Jurang melebar ke 25 markah. Corak menurun berterusan, bukan satu hari yang buruk.'],
- [79.8,78.3,'Semua subjek jatuh serentak','AR2 lebih rendah daripada AR1 dalam semua 7 subjek. Ini isu murid (kehadiran, motivasi, keluarga), bukan isu subjek.']]}]
+ [24.2,9,'Pilih murid','Pilih tingkatan, kelas, kemudian murid.'],
+ [68.5,16.2,'Cetak PDF','PDF individu atau seluruh kelas, untuk perjumpaan dengan murid atau ibu bapa.'],
+ [17.5,24.4,'Label VARK','Label isian guru. Gunakan untuk variasi PdP, bukan sebagai sebab murid lemah.'],
+ [34.2,56.9,'AR1 30 vs OTR1 45','Murid ini 15 markah di bawah sasaran pertengahan dalam BM.'],
+ [57,57.6,'AR2 24 vs OTR2 48','Jurang melebar ke 24 markah. Corak menurun berterusan, bukan satu hari yang buruk.'],
+ [79.9,58.7,'AR3 18 vs OTR3 50','32 markah di bawah sasaran, dan SPM akhirnya G. Murid ini sepatutnya dikenal pasti seawal AR1.'],
+ [80.6,76.2,'Semua subjek jatuh serentak','AR3 lebih rendah daripada AR1 dalam semua 7 subjek, dan SPM gred G untuk semua. Ini isu murid (kehadiran, motivasi, keluarga), bukan isu subjek.']]}]
 };
 const shotHTML=(id,s)=>`<div class="shot-wrap" data-shot="${id}"><p class="shot-cap">${s.cap}<span class="shot-hint"> · <span class="hv">halakan tetikus atau </span>klik nombor untuk penerangan, klik gambar untuk zum</span><span class="demo-link"> · <a href="demo/dashboard.html?page=dashboard" target="_blank" rel="noopener">Cuba dalam demo ↗</a></span></p>
  <div class="shot" role="group" aria-label="Tangkapan skrin: ${s.cap}"><img src="${s.img}" alt="Tangkapan skrin Dashboard SPPM: ${s.cap}" loading="lazy" decoding="async" width="1240" height="${IMG_DIM[s.img]||800}">${s.spots.map((p,i)=>`<button class="spot" style="left:${p[0]}%;top:${p[1]}%" data-i="${i}" aria-label="${i+1}. ${p[2]}" aria-describedby="${id}-pop">${i+1}</button>`).join('')}<div class="pop" id="${id}-pop" role="tooltip" hidden></div></div>
@@ -798,7 +840,7 @@ function setSpot(wrap,i,show){const s=shotData(wrap.dataset.shot);i=(i+s.spots.l
 const ICO={"menu":"<path d=\"M4 6h16M4 12h16M4 18h16\"/>","moon":"<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\"/>","scale":"<path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"/><path d=\"m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"/><path d=\"M7 21h10\"/><path d=\"M12 3v18\"/><path d=\"M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\"/>","users":"<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>","trend":"<path d=\"m22 7-8.5 8.5-5-5L2 17\"/><path d=\"M16 7h6v6\"/>","search":"<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>","checkCircle":"<path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"/><path d=\"m9 11 3 3L22 4\"/>","star":"<path d=\"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z\"/>","alert":"<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>","repeat":"<path d=\"m17 2 4 4-4 4\"/><path d=\"M3 11v-1a4 4 0 0 1 4-4h14\"/><path d=\"m7 22-4-4 4-4\"/><path d=\"M21 13v1a4 4 0 0 1-4 4H3\"/>","clip":"<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"m9 14 2 2 4-4\"/>","camera":"<path d=\"M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z\"/><circle cx=\"12\" cy=\"13\" r=\"3\"/>","check":"<path d=\"M20 6 9 17l-5-5\"/>","up":"<path d=\"m5 12 7-7 7 7\"/><path d=\"M12 19V5\"/>","left":"<path d=\"m15 18-6-6 6-6\"/>","right":"<path d=\"m9 18 6-6-6-6\"/>","x":"<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>","compass":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z\"/>","calendar":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M16 2v4M8 2v4M3 10h18\"/>","help":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\"/><path d=\"M12 17h.01\"/>","printer":"<path d=\"M6 9V2h12v7\"/><path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"/><rect width=\"12\" height=\"8\" x=\"6\" y=\"14\"/>","reset":"<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/><path d=\"M3 3v5h5\"/>"};
 const svg=(n,cls='')=>`<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICO[n]}</svg>`;
 // Saiz sebenar gambar (elak lompatan susun atur semasa dimuat)
-const IMG_DIM={'img/utama.jpg':818,'img/matriks.jpg':760,'img/normaliti.jpg':770,'img/gpmp.jpg':905,'img/gred.jpg':525,'img/grisk.jpg':1225,'img/impak.jpg':622,'img/jurang.jpg':1524,'img/vark.jpg':1100,'img/gaction.jpg':1524,'img/rumusan.jpg':1112,'img/profil.jpg':1400};
+const IMG_DIM={'img/utama.jpg':818,'img/matriks.jpg':760,'img/normaliti.jpg':815,'img/gpmp.jpg':905,'img/gred.jpg':600,'img/grisk.jpg':1225,'img/impak.jpg':622,'img/jurang.jpg':1524,'img/vark.jpg':1100,'img/gaction.jpg':1524,'img/rumusan.jpg':1112,'img/profil.jpg':1440};
 
 /* ===================== RENDER ===================== */
 const $=s=>document.querySelector(s);
@@ -816,7 +858,7 @@ const exScript=(t)=>`<div class="ex-box"><div class="lbl">${svg('calendar','sm')
 const EXPLAIN={
 normaliti:{html:exHead('Graf ini mengira <b>berapa murid dalam setiap julat 10 markah</b>. Bentuk graf memberitahu sama ada murid berkumpul di tengah, terpisah kepada dua kumpulan, atau ramai tertinggal di bawah 40.','Bayangkan semua murid beratur di padang mengikut markah: 0 di hujung kiri, 100 di hujung kanan. Graf ini ialah <b>ketinggian barisan</b> di setiap tempat. Bonggol tinggi = ramai murid berdiri di situ.')
  +`<div class="ex-viz"><h3>Cuba: pilih bentuk taburan</h3><div class="chipbtns" id="nmxBtns"><button class="on" data-k="sihat">Sihat</button><button data-k="dua">Dua kumpulan</button><button data-k="bawah">Ramai di bawah</button><button data-k="gerak">Bergerak (TOV → AR2)</button></div><svg class="nm-svg" id="nmxSvg" viewBox="0 0 520 210" role="img" aria-label="Contoh bentuk taburan markah"></svg><div class="ex-cap" id="nmxCap"></div></div>`
- +exScript('Graf ini menunjukkan berapa murid dalam setiap julat 10 markah. Untuk Matematik, kebanyakan murid berkumpul sekitar 40, iaitu betul-betul di sempadan lulus. Sedikit kenaikan markah boleh mengubah peratus lulus dengan besar, jadi tumpuan kita ialah murid dalam julat 30 hingga 49.'),
+ +exScript('Graf ini menunjukkan berapa murid dalam setiap julat 10 markah. Untuk Matematik, kebanyakan murid berkumpul sekitar 40, iaitu betul-betul di sempadan lulus. Kenaikan beberapa markah sahaja boleh memindahkan ramai murid melintasi garis lulus, jadi tumpuan kita ialah murid dalam julat 30 hingga 49.'),
  init(){const P={sihat:{a:[0,1,3,8,15,22,15,8,3,1,0],cap:'<b>Satu bonggol, kebanyakan di atas 40.</b>Pengajaran biasa sesuai untuk majoriti. Tumpu kepada ekor kiri: murid yang masih di bawah garis 40.'},
   dua:{a:[0,2,8,14,8,4,8,14,8,2,0],cap:'<b>Dua bonggol = dua kumpulan berbeza.</b>Contohnya aliran sains dan sastera, atau kelas kuat dan lemah. Purata tunggal mengelirukan. Tapis ikut kelas dan rancang dua strategi berbeza.'},
   bawah:{a:[2,8,14,18,14,9,5,3,1,0,0],cap:'<b>Bonggol di sebelah kiri garis 40.</b>Ramai murid belum menguasai asas. Fokus kepada pengukuhan asas untuk seluruh kumpulan, bukan latih tubi soalan peperiksaan.'},

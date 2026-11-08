@@ -2,7 +2,7 @@
  * Sheet disimpan dalam memori + localStorage. code.js asal dijalankan tanpa ubah suai.
  */
 (function () {
-  const STORE_KEY = window.__SPPM_SEED ? 'SPPM_DEMO_DB_v3_real' : 'SPPM_DEMO_DB_v3';
+  const STORE_KEY = window.__SPPM_SEED ? 'SPPM_DEMO_DB_v5_real' : 'SPPM_DEMO_DB_v5';
   const DEMO_DB_ID = 'DEMO_CLIENT_DB';
 
   // ---------- RNG deterministik ----------
@@ -10,6 +10,13 @@
   function rnd() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
   function gauss() { let u = 0, v = 0; while (u === 0) u = rnd(); while (v === 0) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
   function pick(a) { return a[Math.floor(rnd() * a.length)]; }
+  let seed3 = 55005;
+  function rnd3() { seed3 = (seed3 * 1664525 + 1013904223) % 4294967296; return seed3 / 4294967296; }
+  function gauss3() { let u = 0, v = 0; while (u === 0) u = rnd3(); while (v === 0) v = rnd3(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  const SPM_PROXY = { 'A+': 95, 'A': 85, 'A-': 75, 'B+': 68, 'B': 63, 'C+': 58, 'C': 53, 'D': 48, 'E': 43, 'G': 20 };
+  let seed2 = 33003;
+  function rnd2() { seed2 = (seed2 * 1664525 + 1013904223) % 4294967296; return seed2 / 4294967296; }
+  function gauss2() { let u = 0, v = 0; while (u === 0) u = rnd2(); while (v === 0) v = rnd2(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
   function clamp(x) { return Math.max(0, Math.min(100, Math.round(x))); }
 
   // ---------- Data contoh ----------
@@ -67,6 +74,13 @@
             if (ex !== 'ETR' && ex !== 'TOV' && rnd() < 0.012) { markah.push(['M' + (++mid), kp, code, ex, '', 'TH']); return; }
             markah.push(['M' + (++mid), kp, code, ex, m, gradeOf(m)]);
           });
+          // AR3 (Percubaan) guna aliran rawak BERASINGAN supaya markah TOV/AR1/AR2/ETR sedia ada tidak berubah
+          const ar3 = clamp(base + growth * 3.2 + gauss2() * 5);
+          if (rnd2() < 0.012) markah.push(['M' + (++mid), kp, code, 'AR3', '', 'TH']);
+          else markah.push(['M' + (++mid), kp, code, 'AR3', ar3, gradeOf(ar3)]);
+          // SPM: gred huruf sahaja + markah proksi (sama seperti sistem sebenar). Aliran rawak ketiga.
+          const spmG = gradeOf(clamp(base + growth * 3.8 + 2 + gauss3() * 6));
+          markah.push(['M' + (++mid), kp, code, 'SPM', SPM_PROXY[spmG], spmG]);
         });
       }
     });
@@ -77,8 +91,8 @@
           ['KOHORT', '2026'], ['PEPERIKSAAN', 'SPM'], ['ADMIN_PASS', 'admin123'], ['KOD_SEKOLAH', 'DEMO001']],
         DB_MURID: murid,
         DB_SUBJEK: [['ID_SUBJEK', 'NAMA', 'SINGKATAN', 'KATEGORI']].concat(SUBJ.map(s => s.slice(0, 4))),
-        DB_EXAM: [['ID_EXAM', 'NAMA_EXAM', 'SINGKATAN'], ['E1', 'Take Off Value', 'TOV'], ['E2', 'Peperiksaan Pertengahan Tahun (AR1)', 'AR1'],
-          ['E3', 'Peperiksaan Percubaan (AR2)', 'AR2'], ['E4', 'Expected Target Result', 'ETR']],
+        DB_EXAM: [['ID_EXAM', 'NAMA_EXAM', 'SINGKATAN'], ['E1', 'Take Off Value', 'TOV'], ['E2', 'PAT Tingkatan 4 (AR1)', 'AR1'],
+          ['E3', 'PPT Tingkatan 5 (AR2)', 'AR2'], ['E5', 'Peperiksaan Percubaan (AR3)', 'AR3'], ['E4', 'Expected Target Result', 'ETR'], ['E6', 'Sijil Pelajaran Malaysia', 'SPM']],
         DB_MARKAH: markah,
         DB_GRED: [['ID_GRED', 'GRED', 'MIN', 'MAX', 'STATUS', 'NILAI']].concat(GRED),
         DB_GAMBAR: [['KP', 'BASE64']]

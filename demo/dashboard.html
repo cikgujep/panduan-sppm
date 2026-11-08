@@ -3814,7 +3814,9 @@
         let html = "";
 
         EXAM_ORD.forEach((ex, idx) => {
-            const gpmpStr = calculateGPMP(sk, ss, ex, 0, st);
+            // Tiada data = "–" (bukan 0.00; GP 0.00 bermaksud semua A+)
+            const gpmpVal = calculateGPMPValue(sk, ss, ex, 0, st);
+            const gpmpStr = gpmpVal === null ? '–' : gpmpVal.toFixed(2);
             const isETR = normExam(ex) === 'ETR';
             const isTOV = normExam(ex) === 'TOV';
 
@@ -3848,10 +3850,14 @@
                 let deltaHtml = "";
                 let hoverBorder = "hover:border-blue-300";
 
-                if (idx > 0) {
-                    const prevEx = EXAM_ORD[idx - 1];
-                    const prevGpmpStr = calculateGPMP(sk, ss, prevEx, 0, st);
-                    const diff = parseFloat(gpmpStr) - parseFloat(prevGpmpStr);
+                // Bandingkan dengan peperiksaan SEBENAR sebelumnya yang ada data (langkau ETR, iaitu target).
+                let prevVal = null;
+                for (let j = idx - 1; j >= 0 && prevVal === null; j--) {
+                    if (normExam(EXAM_ORD[j]) === 'ETR') continue;
+                    prevVal = calculateGPMPValue(sk, ss, EXAM_ORD[j], 0, st);
+                }
+                if (gpmpVal !== null && prevVal !== null) {
+                    const diff = gpmpVal - prevVal;
 
                     if (diff < 0) {
                         // GPMP Turun = Menurun/Lebih Baik (Prestasi Meningkat)
