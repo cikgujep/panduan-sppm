@@ -1,0 +1,2469 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+<script src="gas-mock.js"></script><script src="server.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem HC - V16.24 (Admin Panel)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        window.__tailwindLoaded = false;
+        window.__loadTailwindFallback = function () {
+            if (window.__tailwindLoaded) return;
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4';
+            s.onload = function () { window.__tailwindLoaded = true; };
+            document.head.appendChild(s);
+        };
+    </script>
+    <script src="https://cdn.tailwindcss.com" onload="window.__tailwindLoaded=true"
+        onerror="window.__loadTailwindFallback()"></script>
+    <script>
+        if (window.tailwind && window.tailwind.config) {
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                        colors: { brand: 'var(--brand-color)', light: '#F8FAFC' }
+                    }
+                },
+                safelist: [
+                    'bg-slate-100', 'text-slate-700',
+                    'bg-emerald-50', 'text-emerald-800',
+                    'bg-blue-50', 'text-blue-800',
+                    'bg-yellow-50', 'text-yellow-800',
+                    'bg-rose-50', 'text-rose-800',
+                    'bg-purple-50', 'text-purple-800',
+                    'bg-sky-50', 'text-sky-800',
+                    'bg-orange-50', 'text-orange-800',
+                    'bg-teal-50', 'text-teal-800',
+                    'bg-indigo-50', 'text-indigo-800'
+                ]
+            };
+        }
+    </script>
+    <style>
+        /* Kotak markah tidak sah (bukan nombor 0-100 atau TH) */
+        .mark-input.mark-invalid { border-color: #ef4444 !important; background: #fef2f2 !important; color: #b91c1c !important; box-shadow: 0 0 0 2px rgba(239, 68, 68, .25); }
+        :root {
+            --brand-color: #0F4C75;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Failsafe jika Tailwind CDN gagal load */
+        .text-brand {
+            color: var(--brand-color) !important;
+        }
+
+        .bg-brand {
+            background-color: var(--brand-color) !important;
+        }
+
+        .border-brand {
+            border-color: var(--brand-color) !important;
+        }
+
+        .hover\:text-brand:hover {
+            color: var(--brand-color) !important;
+        }
+
+        .hover\:bg-brand:hover {
+            background-color: var(--brand-color) !important;
+        }
+
+        body {
+            background: #f3f4f6;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+        }
+
+        .blob {
+            position: fixed;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.5;
+            animation: move 10s infinite alternate;
+        }
+
+        .blob-1 {
+            top: -10%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: #fecdd3;
+        }
+
+        .blob-2 {
+            bottom: -10%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: #fed7aa;
+        }
+
+        .blob-3 {
+            top: 20%;
+            right: 20%;
+            width: 400px;
+            height: 400px;
+            background: #bbf7d0;
+        }
+
+        @keyframes move {
+            from {
+                transform: translate(0, 0) scale(1);
+            }
+
+            to {
+                transform: translate(20px, -20px) scale(1.1);
+            }
+        }
+
+        #app-wrapper {
+            width: 100%;
+            max-width: 1440px;
+            height: 100vh;
+            display: flex;
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .glass-header {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .glass-sidebar {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.5);
+            transition: width 0.3s ease, transform 0.3s ease;
+        }
+
+        /* SIDEBAR TOGGLE UTILS */
+        .sidebar-closed {
+            width: 5.5rem !important;
+            /* ~88px */
+            overflow-x: hidden;
+        }
+
+        .sidebar-closed #app-name,
+        .sidebar-closed p,
+        .sidebar-closed .tracking-wider,
+        .sidebar-closed .nav-label {
+            display: none !important;
+        }
+
+        .sidebar-closed nav button {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .sidebar-closed nav button i,
+        .sidebar-closed nav button svg {
+            margin: 0 !important;
+        }
+
+        .sidebar-closed #admin-menu {
+            padding: 0.5rem 0 !important;
+            border: none !important;
+            background: transparent !important;
+        }
+
+        .sidebar-closed .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .input-std {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #cbd5e1;
+            /* Increased visibility from rgba(255, 255, 255, 0.8) */
+            font-size: 0.875rem;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+            border-radius: 0.5rem;
+        }
+
+        .input-std:focus {
+            border-color: var(--brand-color);
+            outline: none;
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .mark-input:focus {
+            background-color: #fff1f2;
+            color: var(--brand-color);
+            font-weight: bold;
+            border-color: var(--brand-color);
+        }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: none;
+        }
+
+        .sticky-col {
+            position: sticky;
+            left: 0;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 20;
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+            min-width: 180px;
+            backdrop-filter: blur(8px);
+        }
+
+        .col-num {
+            left: 0;
+            width: 50px !important;
+            min-width: 50px !important;
+            max-width: 50px !important;
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .col-name {
+            left: 50px;
+            width: 250px;
+            min-width: 200px;
+            max-width: 300px;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 4px 0 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .badge-gred {
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 6px;
+            min-width: 24px;
+            text-align: center;
+            display: inline-block;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .gred-A,
+        .gred-A_plus,
+        .gred-A_minus {
+            background: #dcfce7;
+            color: #166534
+        }
+
+        .gred-B,
+        .gred-B_plus {
+            background: #dbeafe;
+            color: #1e40af
+        }
+
+        .gred-C,
+        .gred-C_plus {
+            background: #fef9c3;
+            color: #854d0e
+        }
+
+        .gred-D,
+        .gred-E {
+            background: #ffedd5;
+            color: #9a3412
+        }
+
+        .gred-G,
+        .gred-F {
+            background: #fee2e2;
+            color: #991b1b
+        }
+
+        .ind-pos {
+            color: #16a34a;
+            font-weight: 800;
+            font-size: 10px;
+            display: block;
+            margin-top: -2px;
+        }
+
+        .ind-neg {
+            color: #dc2626;
+            font-weight: 800;
+            font-size: 10px;
+            display: block;
+            margin-top: -2px;
+        }
+
+        .btn-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--brand-color);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: spin 1s linear infinite
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg)
+            }
+
+            100% {
+                transform: rotate(360deg)
+            }
+        }
+
+        .vak-select {
+            font-weight: bold;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+        }
+
+        .vak-select:focus {
+            background: #fff;
+            border-color: var(--brand-color);
+        }
+
+        /* VARK COLORS */
+        .vak-v-active {
+            background: #dbeafe !important;
+            color: #1e40af !important;
+            border-color: #93c5fd !important;
+        }
+
+        .vak-a-active {
+            background: #dcfce7 !important;
+            color: #166534 !important;
+            border-color: #86efac !important;
+        }
+
+        .vak-r-active {
+            background: #fef9c3 !important;
+            color: #854d0e !important;
+            border-color: #fde047 !important;
+        }
+
+        .vak-k-active {
+            background: #ffedd5 !important;
+            color: #9a3412 !important;
+            border-color: #fdba74 !important;
+        }
+
+        .ses-option {
+            font-weight: 700;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            min-height: 2rem;
+            padding: 0 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ses-option:hover {
+            transform: scale(1.03);
+        }
+
+        .ses-option-active-low {
+            background: #fee2e2 !important;
+            color: #991b1b !important;
+            border-color: #fca5a5 !important;
+        }
+
+        .ses-option-active-other {
+            background: #dbeafe !important;
+            color: #1d4ed8 !important;
+            border-color: #93c5fd !important;
+            border-color: #93c5fd !important;
+        }
+
+        /* --- GLOBAL LOADING SPINNER --- */
+        #global-loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(15, 76, 117, 0.15);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+        }
+
+        .spinner-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 2rem;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .main-spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--brand-color);
+            border-radius: 50%;
+            animation: global-spin 1s linear infinite;
+        }
+
+        @keyframes global-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: var(--brand-color);
+            font-weight: 700;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 640px) {
+            .mobile-container {
+                padding: 0 !important;
+            }
+
+            .mobile-card {
+                background: rgba(255, 255, 255, 0.6);
+                backdrop-filter: blur(12px);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+                border-radius: 0;
+                margin-bottom: 0;
+                box-shadow: none;
+            }
+
+            .mobile-card-head {
+                background: transparent;
+                padding: 10px 16px 2px 16px;
+                font-weight: 700;
+                font-size: 14px;
+                color: #334155;
+            }
+
+            .mobile-card-body {
+                padding: 8px 16px 12px 16px;
+                display: flex;
+                gap: 6px;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            .mobile-card-body::-webkit-scrollbar {
+                display: none;
+            }
+
+            .mobile-exam-col {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
+                border-radius: 8px;
+                padding: 6px;
+                border: 1px solid rgba(255, 255, 255, 0.6);
+                background: rgba(255, 255, 255, 0.4);
+                min-width: 55px;
+            }
+
+            .mobile-exam-col.stretch {
+                flex: 1;
+            }
+
+            .mobile-exam-label {
+                font-size: 9px;
+                font-weight: 800;
+                text-transform: uppercase;
+                color: #64748b;
+            }
+
+            .filter-hidden {
+                display: none;
+            }
+
+            .hide-kp {
+                display: none;
+            }
+
+            #sidebar {
+                background-color: #ffffff !important;
+                backdrop-filter: none !important;
+                border-right: 1px solid #e2e8f0;
+                z-index: 60 !important;
+                position: fixed !important;
+            }
+
+            #mobile-overlay {
+                backdrop-filter: none !important;
+                background-color: rgba(0, 0, 0, 0.5) !important;
+                z-index: 50 !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div id="app-wrapper">
+        <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 hidden md:hidden"></div>
+
+        <aside id="sidebar"
+            class="inset-y-0 left-0 w-72 glass-sidebar z-50 transform -translate-x-full md:translate-x-0 flex flex-col transition-all duration-300">
+            <div class="p-4 h-20 border-b border-white/50 flex items-center gap-3">
+                <img id="app-logo" src="" class="w-10 h-10 object-contain hidden">
+                <div id="app-icon-default"
+                    class="w-10 h-10 bg-brand rounded-xl flex items-center justify-center text-white shadow-lg shrink-0">
+                    <i data-lucide="database" class="w-6 h-6"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <h1 class="font-bold text-sm leading-tight text-slate-800 truncate" id="app-name">Sistem HC</h1>
+                    <p class="text-[10px] text-slate-500 font-medium truncate">SISTEM PENGESANAN PENCAPAIAN MURID</p>
+                </div>
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-500 hover:text-brand ml-auto"><i
+                        data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 mt-2 px-2">Menu Utama
+                </div>
+                <button onclick="nav('markah');if(window.innerWidth<640)toggleSidebar()"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-brand bg-white/50 rounded-xl transition-all whitespace-nowrap"><i
+                        data-lucide="pen-tool" class="w-5 h-5 shrink-0"></i> <span class="nav-label">Isi
+                        Markah</span></button>
+                <button onclick="nav('murid');if(window.innerWidth<640)toggleSidebar()"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-white/50 rounded-xl transition-all whitespace-nowrap"><i
+                        data-lucide="users" class="w-5 h-5 shrink-0"></i> <span class="nav-label">Pengurusan
+                        Murid</span></button>
+                <button onclick="nav('vak');if(window.innerWidth<640)toggleSidebar()"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-white/50 rounded-xl transition-all whitespace-nowrap"><i
+                        data-lucide="brain-circuit" class="w-5 h-5 shrink-0"></i> <span class="nav-label">VARK (Gaya
+                        Belajar)</span></button>
+                <button onclick="nav('ses');if(window.innerWidth<640)toggleSidebar()"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-white/50 rounded-xl transition-all whitespace-nowrap"><i
+                        data-lucide="wallet" class="w-5 h-5 shrink-0"></i> <span class="nav-label">SES
+                        (Sosioekonomi)</span></button>
+
+                <div class="mt-6 pt-6 border-t border-white/50">
+                    <button id="btn-admin-login" onclick="openModal('admin-login')"
+                        class="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-white/50 rounded-xl border border-white/60 whitespace-nowrap"><i
+                            data-lucide="lock" class="w-4 h-4 shrink-0"></i> <span class="nav-label">Setup
+                            Admin</span></button>
+                </div>
+
+                <div id="admin-menu" class="hidden space-y-1 mt-2 bg-white/30 rounded-xl p-2 border border-white/40">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase px-2 mb-1">Admin</p>
+                    <button onclick="nav('setup');if(window.innerWidth<640)toggleSidebar()"
+                        class="w-full flex items-center gap-3 px-4 py-2 text-sm font-bold text-brand hover:bg-white/60 rounded-lg whitespace-nowrap"><i
+                            data-lucide="settings" class="w-4 h-4 shrink-0"></i> <span class="nav-label">Setup
+                            Sistem</span></button>
+                    <button onclick="openImportModal();if(window.innerWidth<640)toggleSidebar()"
+                        class="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white/60 rounded-lg whitespace-nowrap"><i
+                            data-lucide="upload-cloud" class="w-4 h-4 shrink-0"></i> <span class="nav-label">Import
+                            Markah</span></button>
+                    <button onclick="nav('subjek');if(window.innerWidth<640)toggleSidebar()"
+                        class="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white/60 rounded-lg whitespace-nowrap"><i
+                            data-lucide="book" class="w-4 h-4 shrink-0"></i> <span class="nav-label">Mata
+                            Pelajaran</span></button>
+                    <button onclick="nav('exam');if(window.innerWidth<640)toggleSidebar()"
+                        class="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white/60 rounded-lg whitespace-nowrap"><i
+                            data-lucide="clipboard-list" class="w-4 h-4 shrink-0"></i> <span
+                            class="nav-label">Exam</span></button>
+                    <button onclick="nav('gred');if(window.innerWidth<640)toggleSidebar()"
+                        class="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white/60 rounded-lg whitespace-nowrap"><i
+                            data-lucide="award" class="w-4 h-4 shrink-0"></i> <span
+                            class="nav-label">Gred</span></button>
+                </div>
+
+                <div class="mt-4 flex flex-col gap-2">
+                    <button onclick="goDash()"
+                        class="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 text-white font-bold rounded-xl text-xs hover:bg-slate-700 shadow-lg whitespace-nowrap"><i
+                            data-lucide="bar-chart-2" class="w-4 h-4 shrink-0"></i> <span class="nav-label">Buka
+                            Dashboard</span></button>
+                    <button onclick="toggleDesktopSidebar()"
+                        class="max-md:hidden flex w-full items-center justify-center p-2 text-slate-400 hover:text-brand transition-colors rounded-xl border border-dashed border-slate-300 hover:bg-white/50"><i
+                            data-lucide="chevrons-left" class="w-5 h-5 toggle-icon transition-transform"></i></button>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-full relative overflow-hidden transition-all duration-300">
+            <header class="h-16 glass-header flex items-center justify-between px-4 shrink-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="md:hidden text-slate-600"><i data-lucide="menu"
+                            class="w-6 h-6"></i></button>
+                    <button onclick="toggleDesktopSidebar()"
+                        class="max-md:hidden block text-slate-600 hover:text-brand transition-colors"><i
+                            data-lucide="menu" class="w-6 h-6"></i></button>
+
+                    <h2 class="font-bold text-slate-700 md:hidden" id="header-title">Sistem HC</h2>
+                    <h2 class="max-md:hidden block font-bold text-slate-700 ml-2">Pengisian Data</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="ldDt()"
+                        class="p-2 hover:bg-white/50 rounded-xl transition-all text-slate-500 hover:text-brand"
+                        title="Muat Semula Data">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                    </button>
+                    <div id="loading"
+                        class="hidden flex items-center gap-2 bg-white/50 text-brand px-3 py-1 rounded-full text-xs font-bold border border-white">
+                        <div class="loader"></div> Proses...
+                    </div>
+                </div>
+            </header>
+
+            <div
+                class="flex-1 overflow-y-auto p-0 md:p-6 pb-20 md:pb-6 mobile-container w-full min-h-full flex flex-col">
+
+                <div id="view-markah" class="view-section flex flex-col">
+                    <div
+                        class="glass-panel p-5 rounded-none md:rounded-3xl mb-0 md:mb-4 transition-all border-x-0 md:border-x">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Carian & Tapis
+                            </h3>
+                            <button onclick="toggleFilter()" id="btn-toggle-filter"
+                                class="text-xs bg-white/50 hover:bg-white px-3 py-1 rounded-full font-bold text-slate-600 flex items-center gap-1 hidden"><i
+                                    data-lucide="filter" class="w-3 h-3"></i> Tunjukkan</button>
+                        </div>
+                        <div id="filter-container" class="flex flex-col md:flex-row gap-4 items-end transition-all">
+                            <div class="w-full md:flex-1"><label
+                                    class="text-xs font-bold text-slate-500 ml-1">Kelas</label><select id="mf-k"
+                                    class="input-std" onchange="rstM()"></select></div>
+                            <div class="w-full md:flex-1"><label class="text-xs font-bold text-slate-500 ml-1">Mata
+                                    Pelajaran</label><select id="mf-s" class="input-std" onchange="rstM()"></select>
+                            </div><button onclick="renM()"
+                                class="w-full md:w-auto px-8 py-2.5 bg-brand text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all">Papar</button>
+                        </div>
+                    </div>
+                    <div
+                        class="flex flex-col relative glass-panel rounded-none md:rounded-3xl p-0 border-x-0 md:border-x">
+                        <div
+                            class="p-4 border-b border-white/40 flex flex-col md:flex-row justify-between items-center gap-2 bg-white/30 backdrop-blur-sm sticky top-0 z-30">
+                            <div class="flex justify-between w-full md:w-auto items-center">
+                                <div>
+                                    <h3 class="font-bold text-slate-700">Jadual Markah</h3>
+                                    <p class="text-[10px] text-slate-500">Isi markah (Auto Gred) atau Pilih Gred
+                                        (SPM)
+                                    </p>
+                                </div><button onclick="toggleOTR()" id="btn-toggle-otr"
+                                    class="md:hidden text-xs bg-white/60 border border-white px-3 py-1 rounded-lg font-bold text-brand shadow-sm ml-2">Papar
+                                    OTR</button>
+                            </div>
+                            <div class="flex gap-2 w-full md:w-auto"><button onclick="exportToExcel()" id="btn-export"
+                                    class="hidden flex-1 md:flex-none px-4 py-2 bg-emerald-100/80 text-emerald-700 font-bold rounded-xl text-sm hover:bg-emerald-200 border border-emerald-200 flex items-center justify-center gap-2"><i
+                                        data-lucide="sheet" class="w-4 h-4"></i> Excel</button><button onclick="saveM()"
+                                    id="btn-sv"
+                                    class="hidden flex-1 md:flex-none px-6 py-2 bg-slate-800 text-white font-bold rounded-xl text-sm shadow-md hover:bg-slate-700 flex items-center justify-center gap-2"><i
+                                        data-lucide="save" class="w-4 h-4"></i> Simpan</button></div>
+                        </div>
+                        <div class="overflow-x-auto relative w-full p-0" id="tbl-m">
+                            <div
+                                class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60 p-10">
+                                <i data-lucide="mouse-pointer-2" class="w-12 h-12 mb-2 text-slate-300"></i><span
+                                    class="text-sm font-medium">Sila pilih Kelas & Mata Pelajaran</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-murid" class="view-section hidden flex flex-col p-4 md:p-0">
+                    <div class="glass-panel p-4 rounded-3xl mb-4 flex flex-col md:flex-row justify-between gap-3">
+                        <div class="flex gap-2">
+                            <button onclick="openModal('add-stu')"
+                                class="px-5 py-2 bg-slate-800 text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2 hover:bg-slate-700"><i
+                                    data-lucide="user-plus" class="w-4 h-4"></i> Daftar</button>
+                            <button onclick="openModal('imp-stu-mod')"
+                                class="px-5 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-sm shadow flex items-center justify-center gap-2 hover:bg-slate-50"><i
+                                    data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i> Import
+                                CSV</button>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <select id="fil-k" class="input-std w-full md:w-48 font-bold" onchange="renMat()">
+                                <option value="">- Pilih Kelas -</option>
+                            </select>
+                            <button onclick="saveMat()" id="btn-sv-mat"
+                                class="px-6 py-2 bg-green-100/80 text-green-700 font-bold rounded-xl text-sm hover:bg-green-200 whitespace-nowrap">Simpan
+                                Mata Pelajaran</button>
+                            <button onclick="delClass()" id="btn-del-mat"
+                                class="px-6 py-2 bg-rose-100/80 text-rose-700 font-bold rounded-xl text-sm hover:bg-rose-200 whitespace-nowrap">Hapus Satu Kelas</button>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-0 rounded-3xl flex flex-col">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left border-collapse">
+                                <thead
+                                    class="bg-white/50 backdrop-blur sticky top-0 z-40 shadow-sm border-b border-white"
+                                    id="mat-h"></thead>
+                                <tbody id="mat-b" class="divide-y divide-white/50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-vak" class="view-section hidden flex flex-col">
+                    <div
+                        class="glass-panel p-5 rounded-none md:rounded-3xl mb-0 md:mb-4 transition-all border-x-0 md:border-x">
+                        <div class="flex flex-col md:flex-row gap-4 items-end">
+                            <div class="w-full md:w-64"><label class="text-xs font-bold text-slate-500 ml-1">Pilih
+                                    Kelas</label><select id="vak-k" class="input-std" onchange="renVAK()"></select>
+                            </div>
+                            <button onclick="saveVAK()" id="btn-sv-vak"
+                                class="hidden w-full md:w-auto px-8 py-2.5 bg-brand text-white font-bold rounded-xl shadow-lg hover:opacity-90">Simpan
+                                VARK</button>
+                        </div>
+                    </div>
+                    <div
+                        class="flex flex-col relative glass-panel rounded-none md:rounded-3xl p-0 border-x-0 md:border-x">
+                        <div class="overflow-auto flex-1 relative w-full p-0" id="tbl-vak">
+                            <div
+                                class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60 p-10">
+                                Sila pilih kelas.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-ses" class="view-section hidden flex flex-col">
+                    <div
+                        class="glass-panel p-5 rounded-none md:rounded-3xl mb-0 md:mb-4 transition-all border-x-0 md:border-x">
+                        <div class="flex flex-col md:flex-row gap-4 items-end">
+                            <div class="w-full md:w-64"><label class="text-xs font-bold text-slate-500 ml-1">Pilih
+                                    Kelas</label><select id="ses-k" class="input-std" onchange="renSES()"></select>
+                            </div>
+                            <button onclick="saveSES()" id="btn-sv-ses"
+                                class="hidden w-full md:w-auto px-8 py-2.5 bg-brand text-white font-bold rounded-xl shadow-lg hover:opacity-90">Simpan
+                                SES</button>
+                        </div>
+                    </div>
+                    <div
+                        class="flex flex-col relative glass-panel rounded-none md:rounded-3xl p-0 border-x-0 md:border-x">
+                        <div class="overflow-auto flex-1 relative w-full p-0" id="tbl-ses">
+                            <div
+                                class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60 p-10">
+                                Sila pilih kelas.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-setup" class="view-section hidden flex flex-col p-4 md:p-0">
+                    <div class="glass-panel p-6 rounded-3xl max-w-2xl mx-auto w-full bg-white/70">
+                        <h2 class="text-xl font-bold text-slate-800 mb-6 border-b border-slate-200 pb-4">Tetapan
+                            Sistem
+                        </h2>
+                        <div class="space-y-6">
+                            <div class="p-4 bg-brand/5 border border-brand/20 rounded-xl">
+                                <label class="block text-sm font-bold text-slate-600 mb-2">Kod Sekolah <span
+                                        class="text-rose-500">*</span></label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="set-kod-sekolah"
+                                        class="input-std text-lg font-bold text-slate-800 uppercase"
+                                        placeholder="Contoh: JEA3019">
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-2">Masukkan kod sekolah untuk pengesahan. Hanya
+                                    sekolah berdaftar sahaja boleh menggunakan SPPM.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-slate-600 mb-2">Nama Sekolah</label>
+                                <input type="text" id="set-name"
+                                    class="input-std text-lg font-bold text-brand bg-slate-50 cursor-not-allowed"
+                                    placeholder="Nama Sekolah akan diisi automatik" readonly>
+                                <p class="text-[11px] text-slate-500 mt-1">Nama ini disahkan dari Master Database dan
+                                    tidak boleh diubah secara manual.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-slate-600 mb-2">Kohort</label>
+                                <input type="text" id="set-kohort" class="input-std text-base font-bold text-brand"
+                                    placeholder="Contoh: SPM 2026 / Calon SPM 2026">
+                                <p class="text-[11px] text-slate-500 mt-1">Label ini dipaparkan pada header
+                                    dashboard.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-slate-600 mb-2">Peperiksaan</label>
+                                <input type="text" id="set-peperiksaan" class="input-std text-base font-bold text-brand"
+                                    placeholder="Contoh: Sijil Pelajaran Malaysia pada tahun 2026">
+                                <p class="text-[11px] text-slate-500 mt-1">Sistem akan menyelitkan pautan dinamik ini di
+                                    dalam Surat Aku Janji.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-slate-600 mb-2">Warna Tema</label>
+                                <div class="flex gap-4 items-center">
+                                    <input type="color" id="set-color"
+                                        class="w-16 h-12 rounded cursor-pointer border-2 border-white shadow-sm p-1"
+                                        value="#0F4C75" onchange="previewTheme(this.value)">
+                                    <div class="text-xs text-slate-500">Pilih satu warna.</div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-slate-600 mb-2">Logo Sekolah</label>
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-20 h-20 bg-white/50 rounded-xl border border-dashed border-slate-400 flex items-center justify-center overflow-hidden">
+                                        <img id="preview-logo" src="" class="w-full h-full object-contain hidden">
+                                        <i data-lucide="image" class="w-8 h-8 text-slate-300"
+                                            id="icon-logo-placeholder"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <input type="file" id="file-logo" accept="image/*"
+                                            class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                                            onchange="handleLogoUpload(this)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-slate-600 mb-2">Kata Laluan Admin</label>
+                                <input type="password" id="set-admin-pass"
+                                    class="input-std text-base font-bold text-brand"
+                                    placeholder="Kata laluan masuk menu admin">
+                                <p class="text-[11px] text-slate-500 mt-1">Default: admin123. Sila ubah untuk menjaga
+                                    keselamatan akses admin.</p>
+                            </div>
+
+                            <div class="pt-6 border-t border-slate-200 flex justify-end">
+                                <button onclick="saveSetup()"
+                                    class="px-8 py-3 bg-brand text-white font-bold rounded-xl shadow-lg hover:opacity-90 flex items-center gap-2">
+                                    <i data-lucide="save" class="w-4 h-4"></i> Simpan Tetapan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="view-subjek" class="view-section hidden p-4 md:p-0">
+                    <div class="glass-panel p-6 rounded-3xl">
+                        <h3 class="font-bold mb-4">Daftar Mata Pelajaran</h3>
+                        <div class="flex gap-2 mb-4">
+                            <input id="sk" placeholder="Singkatan" class="input-std">
+                            <input id="sn" placeholder="Nama" class="input-std">
+                            <button onclick="addSub()"
+                                class="bg-slate-800 text-white px-4 rounded-xl font-bold">Simpan</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <tbody id="lst-sub"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="view-exam" class="view-section hidden p-4 md:p-0">
+                    <div class="glass-panel p-6 rounded-3xl">
+                        <h3 class="font-bold mb-6 border-b pb-3">Daftar Exam</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <tbody id="lst-ex"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="view-gred" class="view-section hidden p-4 md:p-0">
+                    <div class="glass-panel p-6 rounded-3xl">
+                        <div class="flex justify-between mb-4">
+                            <h3 class="font-bold">Tetapan Gred</h3><button onclick="openModal('add-grd');rstG();"
+                                class="bg-slate-800 text-white px-3 py-1 rounded-xl text-xs font-bold">Tambah</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-white/50 font-bold text-xs">
+                                    <tr>
+                                        <th class="p-3">Gred</th>
+                                        <th class="p-3">Julat</th>
+                                        <th class="p-3">Status</th>
+                                        <th class="p-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lst-grd"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Footer -->
+                <div class="mt-auto w-full pt-10 pb-16">
+                    <div
+                        class="text-center text-xs text-slate-400 py-6 border-t border-slate-200/60 font-medium tracking-wide">
+                        &copy; 2026 App Sekolah Malaysia. All rights reserved. | Designed for Excellence
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="admin-login"
+        class="fixed inset-0 z-50 hidden bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel bg-white/80 p-8 rounded-3xl w-full max-w-sm shadow-2xl">
+            <h3 class="font-bold text-lg mb-4 text-center">Akses Admin</h3><input type="password" id="admin-pass"
+                class="input-std text-center text-lg tracking-widest mb-4" placeholder="••••">
+            <div class="flex gap-2"><button onclick="el('admin-login').classList.add('hidden')"
+                    class="flex-1 py-2 text-slate-500 font-bold hover:bg-white/50 rounded-xl transition">Batal</button><button
+                    onclick="checkAdmin()"
+                    class="flex-1 py-2 bg-brand text-white font-bold rounded-xl shadow-lg hover:scale-105 transition">Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-stu"
+        class="fixed inset-0 z-50 hidden bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel bg-white/90 w-full max-w-md rounded-3xl p-6 shadow-2xl">
+            <h3 class="font-bold mb-4 text-lg">Daftar Murid</h3>
+            <div class="space-y-3">
+                <input id="st-kp" class="input-std" placeholder="No. KP (Tanpa -)" type="text">
+                <input id="st-nm" class="input-std" placeholder="Nama Penuh">
+                <div class="grid grid-cols-2 gap-3">
+                    <input id="st-kl" class="input-std" placeholder="Kelas">
+                    <select id="st-jan" class="input-std bg-white cursor-pointer font-medium text-slate-600">
+                        <option value="">- Jantina -</option>
+                        <option value="L">Lelaki</option>
+                        <option value="P">Perempuan</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-2">
+                <button onclick="el('add-stu').classList.add('hidden')"
+                    class="px-4 font-bold text-slate-500">Batal</button>
+                <button onclick="svStu()"
+                    class="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="imp-stu-mod"
+        class="fixed inset-0 z-50 hidden bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel bg-white/90 w-full max-w-md rounded-3xl p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-slate-800">Import Murid (Excel)</h3>
+                <button onclick="el('imp-stu-mod').classList.add('hidden')" class="text-slate-400 hover:text-red-500"><i
+                        data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800">
+                    <p class="font-bold mb-2">Langkah-langkah:</p>
+                    <ol class="list-decimal pl-4 space-y-1">
+                        <li>Muat turun template Excel.</li>
+                        <li>Isi data murid (Jantina: L/P).</li>
+                        <li>Muat naik fail Excel yang telah diisi.</li>
+                    </ol>
+                </div>
+                <button onclick="downloadStudentTemplate()"
+                    class="w-full py-2 bg-white border border-slate-300 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-50 flex items-center justify-center gap-2"><i
+                        data-lucide="download" class="w-4 h-4"></i> Muat Turun Template</button>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 mb-1 block">Pilih Fail Excel (.xlsx / .xls)</label>
+                    <input type="file" id="imp-stu-file"
+                        class="input-std text-xs file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-opacity-90"
+                        accept=".xlsx, .xls">
+                </div>
+            </div>
+            <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end">
+                <button onclick="processStudentImport()" id="btn-imp-stu"
+                    class="px-6 py-2 bg-green-600 text-white rounded-xl font-bold text-sm shadow hover:bg-green-700 flex items-center gap-2"><i
+                        data-lucide="check-circle" class="w-4 h-4"></i> Proses Import</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="imp-mod"
+        class="fixed inset-0 z-50 hidden bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel bg-white/90 w-full max-w-xl rounded-3xl p-6 flex flex-col max-h-[90vh] shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-200 pb-3">
+                <h3 class="font-bold text-lg text-slate-800">Import Markah (CSV)</h3><button
+                    onclick="el('imp-mod').classList.add('hidden')" class="text-slate-400 hover:text-rose-500"><i
+                        data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+
+            <!-- NEW STATUS SECTION -->
+            <div class="mb-5 pb-4 border-b border-slate-100">
+                <h4 class="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">Status Markah Dalam Sistem
+                </h4>
+                <div id="imp-status-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    <!-- Status badges will be generated here -->
+                </div>
+            </div>
+
+            <div class="space-y-4 overflow-y-auto pr-2">
+                <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800">
+                    <strong>Panduan:</strong> Pastikan fail CSV menggunakan pemisah koma (,) atau semicolon (;).
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-slate-500 block">1. Exam Sasaran</label>
+                            <button onclick="clearExamMarksReq()"
+                                class="text-[10px] bg-rose-100 text-rose-600 hover:bg-rose-200 px-2 py-0.5 rounded font-bold transition-colors flex items-center gap-1"><i
+                                    data-lucide="trash-2" class="w-3 h-3"></i> Padam Rekod</button>
+                        </div>
+                        <select id="imp-exam" class="input-std bg-slate-50 font-bold border-slate-300"></select>
+                    </div>
+                    <div><label class="text-xs font-bold text-slate-500 mb-1 block">2. Fail Data</label><input
+                            type="file" id="imp-file"
+                            class="input-std text-xs file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-opacity-90"
+                            accept=".csv"></div>
+                </div>
+                <div id="imp-map-area" class="hidden space-y-3 border-t border-slate-200 pt-3">
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm font-bold text-slate-800">Padanan Lajur</p><span
+                            class="text-[10px] text-green-600 bg-green-50 px-2 py-1 rounded-full font-bold border border-green-200">Auto-Detect
+                            Aktif</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200"><label
+                            class="text-xs font-bold text-slate-500 mb-1 block">Lajur KP</label><select id="imp-kp-col"
+                            class="input-std h-9 text-xs font-bold text-slate-700"></select></div>
+                    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                        <div
+                            class="bg-slate-50 px-3 py-2 text-xs font-bold text-slate-500 border-b flex justify-between">
+                            <span>Mata Pelajaran Sistem</span><span>Lajur CSV</span>
+                        </div>
+                        <div id="imp-sub-list" class="max-h-60 overflow-y-auto divide-y"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-200 flex justify-end gap-3 shrink-0"><button
+                    onclick="analyzeCSV()" id="btn-ana"
+                    class="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm shadow hover:scale-105 transition-transform flex items-center gap-2"><i
+                        data-lucide="search" class="w-4 h-4"></i> Analisis</button><button onclick="runImport()"
+                    id="btn-run"
+                    class="hidden px-6 py-2 bg-green-500 text-white rounded-xl font-bold text-sm shadow hover:scale-105 transition-transform flex items-center gap-2"><i
+                        data-lucide="check-circle" class="w-4 h-4"></i> <span>Mula Import</span></button></div>
+        </div>
+    </div>
+
+    <div id="add-grd"
+        class="fixed inset-0 z-50 hidden bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-panel bg-white/90 w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+            <h3 class="font-bold mb-4 text-lg">Gred</h3><input type="hidden" id="gr-id">
+            <div class="space-y-3"><input id="gr-nm" class="input-std" placeholder="Gred (A)">
+                <div class="grid grid-cols-2 gap-2"><input id="gr-min" class="input-std" placeholder="Min"
+                        type="number"><input id="gr-max" class="input-std" placeholder="Max" type="number"></div><input
+                    id="gr-st" class="input-std" placeholder="Status">
+            </div>
+            <div class="mt-6 flex justify-end gap-2"><button onclick="el('add-grd').classList.add('hidden')"
+                    class="px-4 font-bold text-slate-500">Batal</button><button onclick="svGrd()"
+                    class="px-6 py-2 bg-slate-800 text-white rounded-xl font-bold text-sm">Simpan</button></div>
+        </div>
+    </div>
+
+    <script>
+        let GD = { subjek: [], murid: [], kelas: [], exam: [], markah: [], gredList: [] }, EXAM_ORD = [], SHOW_OTR = false, SETUP = {};
+        let logoBase64 = "";
+
+        function getFinalExamCode() {
+            if (!GD || !GD.exam) return 'SPM';
+            const ex = GD.exam.find(e => {
+                const s = String(e.SINGKATAN || '').trim().toUpperCase();
+                return s !== 'TOV' && s !== 'ETR' && !s.startsWith('AR');
+            });
+            return ex ? ex.SINGKATAN : 'SPM';
+        }
+
+        function isSpmCohort() {
+            if (!GD || !Array.isArray(GD.gredList) || GD.gredList.length === 0) return true;
+            return GD.gredList.some(item => {
+                const gr = String(item.GRED || '').trim().toUpperCase();
+                return gr === 'A+' || gr === 'A-' || gr === 'B+' || gr === 'C+';
+            });
+        }
+
+        function getFinalExamName() {
+            if (!GD || !GD.exam) return 'Sijil Pelajaran Malaysia';
+            const ex = GD.exam.find(e => {
+                const s = String(e.SINGKATAN || '').trim().toUpperCase();
+                return s !== 'TOV' && s !== 'ETR' && !s.startsWith('AR');
+            });
+            return ex ? ex.NAMA_EXAM : 'Sijil Pelajaran Malaysia';
+        }
+
+        window.onload = () => { lucide.createIcons(); ldDt(); };
+        const el = (i) => document.getElementById(i), val = (i) => el(i).value;
+        function ld(b) {
+            const loader = el('global-loading-overlay');
+            if (loader) loader.classList.toggle('hidden', !b);
+            const oldLoader = el('loading');
+            if (oldLoader) oldLoader.classList.toggle('hidden', !b);
+        }
+        function openModal(i) { el(i).classList.remove('hidden') }
+
+        // --- NAVIGASI KE DASHBOARD ---
+        function goDash() {
+            ld(1);
+            google.script.run
+                .withSuccessHandler(u => {
+                    // Buka Dashboard di tab baru
+                    window.open(u + "?page=dashboard", "_blank");
+                    ld(0);
+                })
+                .withFailureHandler(err => {
+                    showNotification("Ralat membuka dashboard: " + err.message, "error");
+                    ld(0);
+                })
+                .getAppUrl();
+        }
+
+        function nav(i) {
+            // Sembunyikan semua views
+            document.querySelectorAll('.view-section').forEach(e => e.classList.add('hidden'));
+
+            // Paparkan view yang dipilih
+            const viewEl = el('view-' + i);
+            if (viewEl) viewEl.classList.remove('hidden');
+
+            // --- Reset warna semua butang menu (navigasi) ---
+            // Cari semua butang yang ada class 'nav-btn' (kita akan letak ke butang nt untuk mudah)
+            // Sebagai alternatif, cari semua butang dalam element <nav>
+            const navButtons = document.querySelectorAll('aside nav button');
+            navButtons.forEach(btn => {
+                // Jangan reset untuk butang 'Buka Dashboard' atau butang 'Toggle Sidebar' dll
+                if (btn.id === 'btn-admin-login' || btn.lastElementChild && btn.lastElementChild.classList.contains('toggle-icon') || btn.innerText.includes('Dashboard')) return;
+
+                // Buang warna aktif, kembali ke normal
+                btn.classList.remove('text-brand', 'font-bold', 'bg-white/50');
+                btn.classList.add('text-slate-600', 'font-medium', 'hover:bg-white/50');
+
+                // Reset warna icon jadi kelabu (Lucide replace i with svg)
+                const icon = btn.querySelector('i, svg');
+                if (icon) {
+                    icon.classList.remove('text-brand');
+                }
+            });
+
+            // --- Aktifkan (Highlight) butang menu semasa ---
+            // Berdasarkan nama argumen i / string di dalam event onclick
+            const activeBtn = document.querySelector(`aside nav button[onclick*="nav('${i}')"]`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-600', 'font-medium', 'hover:bg-white/50');
+                activeBtn.classList.add('text-brand', 'font-bold', 'bg-white/50');
+                const activeIcon = activeBtn.querySelector('i, svg');
+                if (activeIcon) {
+                    activeIcon.classList.add('text-brand');
+                }
+            }
+
+            // Panggil API sekiranya di perlukan
+            if (i == 'gred') renG();
+            if (i == 'subjek') renS();
+            if (i == 'exam') renE();
+            if (i == 'setup') renderSetup();
+            if (i == 'ses') renSES();
+            if (i == 'murid') renMat();
+        }
+
+        // --- SISTEM NOTIFIKASI KASTAM (PENGGANTI ALERT & CONFIRM) ---
+        function showNotification(msg, type = 'info') {
+            const container = document.getElementById('hc-toast-container') || (function () {
+                const c = document.createElement('div');
+                c.id = 'hc-toast-container';
+                c.className = 'fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none';
+                document.body.appendChild(c);
+                return c;
+            })();
+
+            const toast = document.createElement('div');
+            let colorCls = 'bg-slate-800 text-white border-slate-700';
+            let icon = '<i data-lucide="info" class="w-5 h-5 text-blue-400"></i>';
+
+            if (type === 'error' || msg.toLowerCase().includes('ralat') || msg.toLowerCase().includes('salah')) {
+                colorCls = 'bg-white text-rose-700 border-rose-200 shadow-rose-500/10';
+                icon = '<i data-lucide="alert-circle" class="w-5 h-5 text-rose-500"></i>';
+            } else if (type === 'success' || msg.toLowerCase().includes('berjaya')) {
+                colorCls = 'bg-white text-emerald-700 border-emerald-200 shadow-emerald-500/10';
+                icon = '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>';
+            } else if (type === 'warning') {
+                colorCls = 'bg-white text-amber-700 border-amber-200 shadow-amber-500/10';
+                icon = '<i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500"></i>';
+            } else {
+                colorCls = 'bg-white text-slate-700 border-slate-200 shadow-slate-500/10';
+            }
+
+            toast.className = `flex items-center gap-3 p-4 pr-6 rounded-2xl shadow-xl border ${colorCls} transform transition-all duration-300 translate-x-full opacity-0 pointer-events-auto`;
+            toast.innerHTML = `${icon}<span class="text-sm font-bold flex-1">${msg}</span><button class="opacity-50 hover:opacity-100 ml-2" onclick="this.parentElement.remove()"><i data-lucide="x" class="w-4 h-4"></i></button>`;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            });
+
+            // Auto Animate out
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function showConfirm(msg, onConfirm) {
+            let overlay = document.getElementById('hc-confirm-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'hc-confirm-overlay';
+                overlay.className = 'fixed inset-0 z-[9999] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-200 opacity-0 hidden';
+                overlay.innerHTML = `
+                    <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-sm w-full transform transition-transform duration-200 scale-95 origin-center text-center">
+                        <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="alert-triangle" class="w-8 h-8 text-rose-500"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Pengesahan</h3>
+                        <p id="hc-confirm-msg" class="text-sm text-slate-600 mb-6"></p>
+                        <div class="flex gap-3 justify-center">
+                            <button id="hc-confirm-no" class="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors flex-1">Batal</button>
+                            <button id="hc-confirm-yes" class="px-6 py-2.5 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 shadow-md shadow-rose-500/20 transition-colors flex-1">Teruskan</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                lucide.createIcons();
+            }
+
+            document.getElementById('hc-confirm-msg').innerText = msg;
+
+            const btnYes = document.getElementById('hc-confirm-yes');
+            const btnNo = document.getElementById('hc-confirm-no');
+
+            // Clean old listeners
+            const newBtnYes = btnYes.cloneNode(true);
+            const newBtnNo = btnNo.cloneNode(true);
+            btnYes.parentNode.replaceChild(newBtnYes, btnYes);
+            btnNo.parentNode.replaceChild(newBtnNo, btnNo);
+
+            const closeDlg = () => {
+                overlay.classList.remove('opacity-100');
+                overlay.firstElementChild.classList.remove('scale-100');
+                setTimeout(() => { overlay.classList.add('hidden'); }, 200);
+            };
+
+            newBtnNo.onclick = closeDlg;
+            newBtnYes.onclick = () => {
+                closeDlg();
+                if (onConfirm) onConfirm();
+            };
+
+            overlay.classList.remove('hidden');
+            // Trigger animation
+            requestAnimationFrame(() => {
+                overlay.classList.add('opacity-100');
+                overlay.firstElementChild.classList.add('scale-100');
+            });
+        }
+
+        // --- SISTEM ---
+        function toggleSidebar() { const sb = el('sidebar'), ov = el('mobile-overlay'); if (sb.classList.contains('-translate-x-full')) { sb.classList.remove('-translate-x-full'); ov.classList.remove('hidden'); } else { sb.classList.add('-translate-x-full'); ov.classList.add('hidden'); } }
+
+        function toggleDesktopSidebar() {
+            const sb = el('sidebar');
+            if (sb.classList.contains('sidebar-closed')) {
+                sb.classList.remove('sidebar-closed');
+            } else {
+                sb.classList.add('sidebar-closed');
+            }
+        }
+
+        function checkAdmin() {
+            const p = val('admin-pass');
+            const targetPass = (SETUP && SETUP.ADMIN_PASS) ? SETUP.ADMIN_PASS : "admin123";
+            if (p === targetPass) {
+                el('admin-login').classList.add('hidden');
+                el('admin-menu').classList.remove('hidden');
+                el('btn-admin-login').classList.add('hidden');
+                showNotification("Akses Admin Diberikan.", "success");
+            } else {
+                showNotification("Kata laluan salah!", "error");
+            }
+        }
+        function ldDt() {
+            ld(1);
+            google.script.run
+                .withSuccessHandler(d => {
+                    if (!d) {
+                        showNotification("Ralat: Tiada data diterima daripada pelayan.", "error");
+                        ld(0);
+                        return;
+                    }
+                    if (d.error) {
+                        showNotification("Ralat Pelayan: " + d.error, "error");
+                        ld(0);
+                        return;
+                    }
+                    GD = d;
+                    SETUP = d.setup;
+
+                    // Semak pengesahan Kod Sekolah
+                    const isSetupPage = window.location.search.includes('page=setup') || el('view-setup') && !el('view-setup').classList.contains('hidden');
+
+                    if (!d.schoolCodeValid) {
+                        showNotification("Perhatian: Kod Sekolah belum disahkan. Sila tetapkan Kod Sekolah di menu Tetapan Administrator.", "error");
+                        applyTheme();
+                        iniD();
+                        // Paksa buka menu Tetapan jika kod tak sah
+                        if (el('admin-login')) {
+                            el('admin-login').classList.add('hidden');
+                            el('admin-menu').classList.remove('hidden');
+                            el('btn-admin-login').classList.add('hidden');
+                        }
+                        nav('setup');
+                        ld(0);
+                        return;
+                    } else {
+                        // Jika sah, pastikan menu admin dikunci semula (password protected)
+                        if (el('admin-menu') && !el('admin-menu').classList.contains('hidden')) {
+                            el('admin-menu').classList.add('hidden');
+                            if (el('btn-admin-login')) el('btn-admin-login').classList.remove('hidden');
+                        }
+                        // Jika paparan semasa adalah setup, keluar dari menu admin ke dashboard utama (markah)
+                        if (isSetupPage) {
+                            nav('markah');
+                        }
+                    }
+
+                    applyTheme();
+                    iniD();
+                    renM(true);
+                    if (el('view-murid') && !el('view-murid').classList.contains('hidden')) {
+                        renMat();
+                    }
+                    ld(0);
+                })
+                .withFailureHandler(err => {
+                    showNotification("Ralat memuatkan data: " + err.message, "error");
+                    ld(0);
+                })
+                .getInitialData();
+        }
+        function iniD() {
+            const k = el('mf-k'), s = el('mf-s'), k2 = el('fil-k'), k3 = el('vak-k'), k4 = el('ses-k');
+            const prevK = k ? k.value : '', prevK2 = k2 ? k2.value : '', prevK3 = k3 ? k3.value : '', prevK4 = k4 ? k4.value : '', prevS = s ? s.value : '';
+            k.innerHTML = '<option value="">-Kelas-</option><option value="ALL">Semua Kelas</option>';
+            k2.innerHTML = '<option value="">- Pilih Kelas -</option><option value="ALL">Semua Kelas</option>';
+            k3.innerHTML = '<option value="">- Pilih Kelas -</option><option value="ALL">Semua Kelas</option>';
+            k4.innerHTML = '<option value="">- Pilih Kelas -</option><option value="ALL">Semua Kelas</option>';
+            s.innerHTML = '<option value="">-Mata Pelajaran-</option>';
+            GD.kelas.forEach(c => { const opt = `<option>${c}</option>`; k.innerHTML += opt; k2.innerHTML += opt; k3.innerHTML += opt; k4.innerHTML += opt; });
+            GD.subjek.forEach(x => s.innerHTML += `<option value="${x.SINGKATAN}">${x.NAMA}</option>`);
+            if (prevK && (GD.kelas.includes(prevK) || prevK === 'ALL')) k.value = prevK;
+            if (prevK2 && (GD.kelas.includes(prevK2) || prevK2 === 'ALL')) k2.value = prevK2;
+            if (prevK3 && (GD.kelas.includes(prevK3) || prevK3 === 'ALL')) k3.value = prevK3;
+            if (prevK4 && (GD.kelas.includes(prevK4) || prevK4 === 'ALL')) k4.value = prevK4;
+            if (prevS && GD.subjek.some(x => x.SINGKATAN === prevS)) s.value = prevS;
+            const finalCode = getFinalExamCode();
+            const allEx = GD.exam.map(e => e.SINGKATAN), mid = allEx.filter(e => e !== 'TOV' && e !== 'ETR' && e !== finalCode).sort();
+            EXAM_ORD = ['TOV', ...mid, 'ETR'];
+            if (allEx.includes(finalCode)) EXAM_ORD.push(finalCode);
+            const ie = el('imp-exam'); ie.innerHTML = ''; EXAM_ORD.forEach(x => ie.innerHTML += `<option value="${x}">${x}</option>`);
+        }
+        function applyTheme() {
+            if (SETUP.THEME_COLOR) {
+                const hex = SETUP.THEME_COLOR;
+                document.documentElement.style.setProperty('--brand-color', hex);
+                el('set-color').value = hex;
+                document.documentElement.style.setProperty('--blob-1', adjustColor(hex, 40, 0.9));
+                document.documentElement.style.setProperty('--blob-2', adjustColor(hex, 60, 0.8));
+                document.documentElement.style.setProperty('--blob-3', adjustColor(hex, -30, 0.85));
+            }
+
+            if (SETUP.KOD_SEKOLAH) {
+                if (el('set-kod-sekolah')) el('set-kod-sekolah').value = SETUP.KOD_SEKOLAH;
+            }
+
+            if (SETUP.SCHOOL_NAME) {
+                if (el('app-name')) el('app-name').innerText = SETUP.SCHOOL_NAME;
+                if (el('set-name')) el('set-name').value = SETUP.SCHOOL_NAME;
+            }
+
+            const kohortText = String(SETUP.KOHORT || '').trim();
+            if (el('set-kohort')) el('set-kohort').value = kohortText;
+
+            const examText = String(SETUP.PEPERIKSAAN || '').trim();
+            if (el('set-peperiksaan')) el('set-peperiksaan').value = examText;
+
+            if (SETUP.SCHOOL_LOGO) {
+                el('app-logo').src = SETUP.SCHOOL_LOGO;
+                el('app-logo').classList.remove('hidden');
+                el('app-icon-default').classList.add('hidden');
+                el('preview-logo').src = SETUP.SCHOOL_LOGO;
+                el('preview-logo').classList.remove('hidden');
+                el('icon-logo-placeholder').classList.add('hidden');
+                // Kekalkan base64 sedia ada supaya Simpan Tetapan tidak memadam logo.
+                logoBase64 = SETUP.SCHOOL_LOGO;
+            }
+
+            if (SETUP.ADMIN_PASS) {
+                if (el('set-admin-pass')) el('set-admin-pass').value = SETUP.ADMIN_PASS;
+            }
+        }
+        function previewTheme(hex) { document.documentElement.style.setProperty('--brand-color', hex); document.documentElement.style.setProperty('--blob-1', adjustColor(hex, 40, 0.9)); document.documentElement.style.setProperty('--blob-2', adjustColor(hex, 60, 0.8)); document.documentElement.style.setProperty('--blob-3', adjustColor(hex, -30, 0.85)); }
+        function adjustColor(hex, hS, l) { let r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255; let max = Math.max(r, g, b), min = Math.min(r, g, b), h; if (max == min) h = 0; else { let d = max - min; switch (max) { case r: h = (g - b) / d + (g < b ? 6 : 0); break; case g: h = (b - r) / d + 2; break; case b: h = (r - g) / d + 4; break; } h /= 6; } h = (h * 360 + hS) % 360; if (h < 0) h += 360; let s = 0.7; const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2; let r1, g1, b1; if (h < 60) { r1 = c; g1 = x; b1 = 0; } else if (h < 120) { r1 = x; g1 = c; b1 = 0; } else if (h < 180) { r1 = 0; g1 = c; b1 = x; } else if (h < 240) { r1 = 0; g1 = x; b1 = c; } else if (h < 300) { r1 = x; g1 = 0; b1 = c; } else { r1 = c; g1 = 0; b1 = x; } const toHex = (n) => { const hh = Math.round((n + m) * 255).toString(16); return hh.length === 1 ? "0" + hh : hh; }; return `#${toHex(r1)}${toHex(g1)}${toHex(b1)}`; }
+        function handleLogoUpload(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function (event) { const img = new Image(); img.onload = function () { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); const scale = 100 / img.height; canvas.height = 100; canvas.width = img.width * scale; ctx.drawImage(img, 0, 0, canvas.width, canvas.height); logoBase64 = canvas.toDataURL('image/png'); el('preview-logo').src = logoBase64; el('preview-logo').classList.remove('hidden'); el('icon-logo-placeholder').classList.add('hidden'); }; img.src = event.target.result; }; reader.readAsDataURL(file); }
+        function renderSetup() { }
+        function saveSetup() {
+            const kod = val('set-kod-sekolah');
+            if (!kod || kod.trim() === '') {
+                return showNotification('Sila masukkan Kod Sekolah.', 'warning');
+            }
+
+            const form = {
+                kodSekolah: kod.toUpperCase().trim(),
+                name: val('set-name'),
+                kohort: val('set-kohort'),
+                peperiksaan: val('set-peperiksaan'),
+                adminPass: val('set-admin-pass'),
+                color: val('set-color'),
+                logo: logoBase64 || SETUP.SCHOOL_LOGO || ""
+            };
+            ld(1);
+            google.script.run
+                .withSuccessHandler(r => {
+                    if (String(r).startsWith("RALAT_KOD_SEKOLAH:")) {
+                        showNotification(String(r).replace("RALAT_KOD_SEKOLAH:", ""), 'error');
+                        el('set-name').value = ""; // Clear nama
+                        ld(0);
+                    } else {
+                        showNotification(r, 'success');
+                        // Reload data sentiasa pastikan view betul
+                        ldDt();
+                        ld(0);
+                    }
+                })
+                .withFailureHandler(err => {
+                    showNotification("Ralat menyimpan tetapan: " + err.message, "error");
+                    ld(0);
+                })
+                .saveSystemSetup(form);
+        }
+
+        function toggleOTR() { SHOW_OTR = !SHOW_OTR; const btn = el('btn-toggle-otr'); btn.innerText = SHOW_OTR ? "Sembunyi OTR" : "Papar OTR"; btn.className = SHOW_OTR ? "md:hidden text-xs bg-rose-100 border border-rose-200 px-2 py-1 rounded font-bold text-rose-700 shadow-sm ml-2" : "md:hidden text-xs bg-white border border-white px-2 py-1 rounded font-bold text-slate-500 shadow-sm ml-2"; renM(); }
+        function toggleFilter() { const fc = el('filter-container'); const bt = el('btn-toggle-filter'); if (fc.classList.contains('hidden')) { fc.classList.remove('hidden'); bt.classList.add('hidden'); } else { fc.classList.add('hidden'); bt.classList.remove('hidden'); } }
+        function rstM() { el('tbl-m').innerHTML = '<div class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60 p-10"><i data-lucide="mouse-pointer-2" class="w-10 h-10 mb-2 text-slate-300"></i><span class="text-sm font-medium">Sila pilih kelas & mata pelajaran</span></div>'; el('btn-sv').classList.add('hidden'); el('btn-export').classList.add('hidden'); lucide.createIcons(); }
+
+        function renM(silent = false) {
+            const k = val('mf-k'), s = val('mf-s');
+            if (!k || !s) {
+                if (!silent) showNotification("Pilih Kelas & Mata Pelajaran", "warning");
+                return;
+            }
+            if (window.innerWidth < 640) { el('filter-container').classList.add('hidden'); el('btn-toggle-filter').classList.remove('hidden'); }
+            const st = GD.murid.filter(m => (m.SUBJEK_DIAMBIL || "").split(',').map(x => x.trim()).includes(s) && (k === 'ALL' || m.KELAS == k));
+            if (!st.length) return el('tbl-m').innerHTML = '<div class="p-10 text-center text-slate-400 bg-white md:bg-transparent rounded-xl">Tiada Murid</div>';
+
+            const isMobile = window.innerWidth < 640; let html = "";
+            const gredOptions = ["A+", "A", "A-", "B+", "B", "C+", "C", "D", "E", "G", "TH"].map(g => `<option value="${g}">${g}</option>`).join('');
+            const finalCode = getFinalExamCode();
+
+            if (isMobile) {
+                st.forEach((m, i) => {
+                    html += `<div class="mobile-card"><div class="mobile-card-head"><span>${i + 1}. ${m.NAMA}</span></div><div class="mobile-card-body">`;
+                    let arVals = EXAM_ORD.map(ex => { const x = GD.markah.find(z => String(z.NO_KP) === String(m.NO_KP) && z.KOD_SUBJEK == s && z.KOD_EXAM == ex); return x ? markNum(x.MARKAH) : null; });
+                    let otrVals = []; const tov = arVals[0], etr = arVals[EXAM_ORD.indexOf('ETR')];
+                    if (tov !== null && etr !== null) { const step = (etr - tov) / (EXAM_ORD.indexOf('ETR')); otrVals = EXAM_ORD.map((_, i) => Math.round(tov + (step * i))); }
+                    EXAM_ORD.forEach((ex, idx) => {
+                        const mk = GD.markah.find(x => String(x.NO_KP) === String(m.NO_KP) && x.KOD_SUBJEK == s && x.KOD_EXAM == ex);
+                        const val = mk ? mk.MARKAH : ""; const gredVal = mk ? mk.GRED : ""; const grd = getG(val);
+                        let onEv = ex === 'TOV' || ex === 'ETR' ? `oninput="recalcOTR(this)"` : `oninput="upG(this)"`;
+                        let otrBlock = "";
+                        if (SHOW_OTR && ex !== 'ETR' && ex !== finalCode && EXAM_ORD[idx + 1] !== 'ETR' && EXAM_ORD[idx + 1] !== finalCode) {
+                            const ov = otrVals[idx + 1]; const og = getG(ov);
+                            otrBlock = `<div class="mobile-exam-col bg-white/40 p-1 rounded border border-dashed border-slate-300"><span class="mobile-exam-label text-[8px]">OTR${idx + 1}</span><span id="otr-v-${m.NO_KP}-${idx}" class="font-bold text-xs text-slate-600">${ov !== undefined ? ov : '-'}</span><span id="otr-g-${m.NO_KP}-${idx}" class="badge-gred scale-75 gred-${og.replace('+', '_plus').replace('-', '_minus')}">${og}</span></div>`;
+                        }
+                        let bg = ex === 'TOV' ? 'bg-rose-50/50 border-rose-100' : (ex === 'ETR' ? 'bg-emerald-50/50 border-emerald-100' : 'bg-white/40');
+                        let growClass = (!SHOW_OTR) ? "stretch" : "";
+                        let inputHtml = "";
+                        if (ex === finalCode && isSpmCohort()) {
+                            const finalGrades = [...new Set(GD.gredList.map(g => g.GRED).filter(Boolean))];
+                            if (!finalGrades.includes("TH")) finalGrades.push("TH");
+                            inputHtml = `<select class="input-std h-8 text-xs font-bold text-center spm-select" data-k="${m.NO_KP}" data-s="${s}" data-e="${ex}"><option value="">-</option>${finalGrades.map(g => `<option value="${g}" ${g === gredVal ? 'selected' : ''}>${g}</option>`).join('')}</select>`;
+                        } else {
+                            inputHtml = `<input type="text" class="mark-input w-8 h-8 text-center rounded border text-xs font-bold bg-white" placeholder="-" data-k="${m.NO_KP}" data-s="${s}" data-e="${ex}" value="${val}" ${onEv}><span id="g-${m.NO_KP}-${ex}" class="badge-gred gred-${grd.replace('+', '_plus').replace('-', '_minus')}">${grd}</span>`;
+                        }
+                        html += `<div class="mobile-exam-col ${bg} p-1 rounded border border-white/60 ${growClass}"><span class="mobile-exam-label">${ex}</span>${inputHtml}</div>${otrBlock}`;
+                    });
+                    html += `</div></div>`;
+                });
+            } else {
+                html = `<table class="w-full text-sm text-left border-collapse table-auto"><thead class="bg-white/60 backdrop-blur sticky top-0 z-30 font-bold text-xs uppercase border-b border-white"><tr><th class="p-3 text-center sticky-col col-num bg-white/90 backdrop-blur border-b border-white">#</th><th class="p-3 text-left sticky-col col-name bg-white/90 backdrop-blur border-b border-white shadow-sm">Nama</th>`;
+                EXAM_ORD.forEach((ex, idx) => { let bg = ex === 'TOV' ? 'bg-rose-50/50 text-rose-700' : (ex === 'ETR' ? 'bg-emerald-50/50 text-emerald-700' : 'bg-white/40'); html += `<th class="p-2 text-center border-l border-white/50 col-exam ${bg}">${ex}</th>`; if (ex !== 'ETR' && ex !== finalCode && EXAM_ORD[idx + 1] !== 'ETR' && EXAM_ORD[idx + 1] !== finalCode) html += `<th class="p-2 text-center bg-slate-50/30 text-slate-500 border-l border-white/50 col-otr">OTR${idx + 1}</th>`; });
+                html += `</tr></thead><tbody class="divide-y divide-white/50">`;
+                st.forEach((m, i) => {
+                    html += `<tr class="hover:bg-white/40 transition-colors"><td class="p-3 text-center sticky-col col-num bg-white/80 backdrop-blur border-b border-white/50">${i + 1}</td><td class="p-3 font-bold sticky-col col-name bg-white/80 backdrop-blur border-b border-white/50 shadow-sm truncate text-slate-700">${m.NAMA}<br><span class="text-[9px] text-slate-400 hide-kp font-normal">${m.NO_KP}</span></td>`;
+                    let arVals = EXAM_ORD.map(ex => { const x = GD.markah.find(z => String(z.NO_KP) === String(m.NO_KP) && z.KOD_SUBJEK == s && z.KOD_EXAM == ex); return x ? markNum(x.MARKAH) : null; }); let otrVals = []; const tov = arVals[0], etr = arVals[EXAM_ORD.indexOf('ETR')]; if (tov !== null && etr !== null) { const step = (etr - tov) / (EXAM_ORD.indexOf('ETR')); otrVals = EXAM_ORD.map((_, i) => Math.round(tov + (step * i))); }
+                    EXAM_ORD.forEach((ex, idx) => {
+                        const mk = GD.markah.find(x => String(x.NO_KP) === String(m.NO_KP) && x.KOD_SUBJEK == s && x.KOD_EXAM == ex); const val = mk ? mk.MARKAH : ""; const gredVal = mk ? mk.GRED : ""; const grd = getG(val); let onEv = ex === 'TOV' || ex === 'ETR' ? `oninput="recalcOTR(this)"` : `oninput="upG(this)"`;
+                        let inputHtml = "";
+                        if (ex === finalCode && isSpmCohort()) {
+                            const finalGrades = [...new Set(GD.gredList.map(g => g.GRED).filter(Boolean))];
+                            if (!finalGrades.includes("TH")) finalGrades.push("TH");
+                            inputHtml = `<select class="input-std h-8 w-16 text-xs font-bold text-center spm-select" data-k="${m.NO_KP}" data-s="${s}" data-e="${ex}"><option value="">-</option>${finalGrades.map(g => `<option value="${g}" ${g === gredVal ? 'selected' : ''}>${g}</option>`).join('')}</select>`;
+                        } else {
+                            inputHtml = `<div class="flex items-center justify-center gap-1"><input type="text" class="mark-input w-10 h-8 text-center rounded border text-xs font-bold" placeholder="-" data-k="${m.NO_KP}" data-s="${s}" data-e="${ex}" value="${val}" ${onEv}><span id="g-${m.NO_KP}-${ex}" class="badge-gred gred-${grd.replace('+', '_plus').replace('-', '_minus')}">${grd}</span></div>`;
+                        }
+                        html += `<td class="p-2 text-center border-l border-white/50">${inputHtml}</td>`;
+                        if (ex !== 'ETR' && ex !== finalCode && EXAM_ORD[idx + 1] !== 'ETR' && EXAM_ORD[idx + 1] !== finalCode) {
+                            const ov = otrVals[idx + 1]; const og = getG(ov);
+                            html += `<td class="p-2 border-l border-white/50 bg-slate-50/20 text-center"><div class="flex flex-col items-center"><div class="flex items-center gap-1"><span id="otr-v-${m.NO_KP}-${idx}" class="font-bold text-xs text-slate-600">${ov !== undefined ? ov : '-'}</span><span id="otr-g-${m.NO_KP}-${idx}" class="badge-gred scale-75 gred-${og.replace('+', '_plus').replace('-', '_minus')}">${og}</span></div><span id="otr-i-${m.NO_KP}-${idx}" class="text-[9px] font-bold h-3 mt-0.5"></span></div></td>`;
+                        }
+                    }); html += `</tr>`;
+                }); html += '</tbody></table>';
+            }
+            el('tbl-m').innerHTML = html; el('btn-sv').classList.remove('hidden'); el('btn-export').classList.remove('hidden');
+            setTimeout(() => st.forEach(m => doCalc(m.NO_KP)), 100);
+        }
+
+        // --- UPDATED: VARK (4 OPTIONS) ---
+        function renVAK() {
+            const k = val('vak-k'); if (!k) return el('tbl-vak').innerHTML = '<div class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60 p-10">Pilih Kelas</div>';
+            const st = GD.murid.filter(m => k === 'ALL' || m.KELAS == k);
+            // Header table VARK updated
+            let h = `<table class="w-full text-sm text-left border-collapse table-auto"><thead class="bg-white/60 backdrop-blur sticky top-0 z-30 font-bold text-xs uppercase border-b border-white"><tr><th class="p-3 w-10 text-center">#</th><th class="p-3">Nama</th><th class="p-3 text-center w-12">V</th><th class="p-3 text-center w-12">A</th><th class="p-3 text-center w-12">R</th><th class="p-3 text-center w-12">K</th><th class="p-3 text-center w-24">Gabungan</th></tr></thead><tbody class="divide-y divide-white/50">`;
+            st.forEach((m, i) => {
+                const vak = m.GAYA_BELAJAR || "";
+                h += `<tr class="hover:bg-white/40 transition-colors">
+                    <td class="p-3 text-center">${i + 1}</td>
+                    <td class="p-3 font-bold text-slate-700">${m.NAMA}</td>
+                    <td class="p-2 text-center"><div onclick="togVAK(this, 'V')" class="vak-select w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 ${vak.includes('V') ? 'vak-v-active' : ''} shadow-sm text-xs transition-all hover:scale-110">V</div></td>
+                    <td class="p-2 text-center"><div onclick="togVAK(this, 'A')" class="vak-select w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 ${vak.includes('A') ? 'vak-a-active' : ''} shadow-sm text-xs transition-all hover:scale-110">A</div></td>
+                    <td class="p-2 text-center"><div onclick="togVAK(this, 'R')" class="vak-select w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 ${vak.includes('R') ? 'vak-r-active' : ''} shadow-sm text-xs transition-all hover:scale-110">R</div></td>
+                    <td class="p-2 text-center"><div onclick="togVAK(this, 'K')" class="vak-select w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 ${vak.includes('K') ? 'vak-k-active' : ''} shadow-sm text-xs transition-all hover:scale-110">K</div></td>
+                    <td class="p-2 text-center font-bold text-slate-600 vak-res" data-kp="${m.NO_KP}">${vak}</td>
+                </tr>`;
+            });
+            el('tbl-vak').innerHTML = h + '</tbody></table>'; el('btn-sv-vak').classList.remove('hidden');
+        }
+
+        function togVAK(div, type) {
+            const row = div.closest('tr'); const res = row.querySelector('.vak-res'); let current = res.innerText;
+            if (current.includes(type)) {
+                current = current.replace(type, '');
+                div.className = "vak-select w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 shadow-sm text-xs transition-all hover:scale-110";
+            } else {
+                current += type;
+                let cls = "";
+                if (type == 'V') cls = "vak-v-active";
+                if (type == 'A') cls = "vak-a-active";
+                if (type == 'R') cls = "vak-r-active";
+                if (type == 'K') cls = "vak-k-active";
+                div.className = `vak-select w-8 h-8 rounded-lg flex items-center justify-center border ${cls} shadow-sm text-xs transition-all hover:scale-110`;
+            }
+            const order = ['V', 'A', 'R', 'K'];
+            res.innerText = current.split('').sort((a, b) => order.indexOf(a) - order.indexOf(b)).join('');
+        }
+
+        function saveVAK() {
+            const data = [];
+            document.querySelectorAll('.vak-res').forEach(el => {
+                data.push({ kp: el.dataset.kp, vak: el.innerText });
+            });
+            lockBtn('btn-sv-vak', 'Menyimpan...');
+            google.script.run
+                .withSuccessHandler(r => {
+                    showNotification(r, 'success');
+                    ldDt();
+                    unlockBtn('btn-sv-vak', 'Simpan VARK');
+                })
+                .withFailureHandler(err => {
+                    showNotification("Ralat menyimpan data VARK: " + err.message, "error");
+                    unlockBtn('btn-sv-vak', 'Simpan VARK');
+                })
+                .saveStudentVAK(data);
+        }
+        function normalizeSESValue(v) { const token = String(v || "").trim().toUpperCase(); return (token === 'SESR' || token === 'SESSR') ? token : ''; }
+        function getSESOptionClass(type, active) { let cls = "ses-option"; if (active) cls += type === 'SESR' ? " ses-option-active-low" : " ses-option-active-other"; return cls; }
+        function renSES() {
+            const k = val('ses-k'); if (!k) { el('tbl-ses').innerHTML = '<div class="h-full flex flex-col items-center justify-center text-slate-400 opacity-60 p-10">Pilih Kelas</div>'; el('btn-sv-ses').classList.add('hidden'); return; }
+            const st = GD.murid.filter(m => k === 'ALL' || m.KELAS == k);
+            let h = `<table class="w-full text-sm text-left border-collapse table-auto"><thead class="bg-white/60 backdrop-blur sticky top-0 z-30 font-bold text-xs uppercase border-b border-white"><tr><th class="p-3 w-10 text-center">#</th><th class="p-3">Nama</th><th class="p-3 text-center w-28">SESR</th><th class="p-3 text-center w-28">SESSR</th><th class="p-3 text-center w-28">Status</th></tr></thead><tbody class="divide-y divide-white/50">`;
+            st.forEach((m, i) => {
+                const ses = normalizeSESValue(m.SES);
+                h += `<tr class="hover:bg-white/40 transition-colors">
+                    <td class="p-3 text-center">${i + 1}</td>
+                    <td class="p-3 font-bold text-slate-700">${m.NAMA}</td>
+                    <td class="p-2 text-center"><div onclick="togSES(this, 'SESR')" data-type="SESR" class="${getSESOptionClass('SESR', ses === 'SESR')}">SESR</div></td>
+                    <td class="p-2 text-center"><div onclick="togSES(this, 'SESSR')" data-type="SESSR" class="${getSESOptionClass('SESSR', ses === 'SESSR')}">SESSR</div></td>
+                    <td class="p-2 text-center font-bold text-slate-600 ses-res" data-kp="${m.NO_KP}">${ses}</td>
+                </tr>`;
+            });
+            el('tbl-ses').innerHTML = h + '</tbody></table>'; el('btn-sv-ses').classList.remove('hidden');
+        }
+        function togSES(div, type) {
+            const row = div.closest('tr'); if (!row) return;
+            const res = row.querySelector('.ses-res'); const opts = row.querySelectorAll('.ses-option');
+            const current = normalizeSESValue(res.innerText); const next = current === type ? '' : type;
+            opts.forEach(opt => { const optType = opt.dataset.type; opt.className = getSESOptionClass(optType, next === optType); });
+            res.innerText = next;
+        }
+        function saveSES() {
+            const data = [];
+            document.querySelectorAll('.ses-res').forEach(node => {
+                data.push({ kp: node.dataset.kp, ses: normalizeSESValue(node.innerText) });
+            });
+
+            lockBtn('btn-sv-ses', 'Menyimpan...');
+
+            let settled = false;
+            const finish = (isError, message) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(watchdog);
+                unlockBtn('btn-sv-ses', 'Simpan SES');
+                if (message) showNotification(message, isError ? 'error' : 'success');
+                if (!isError) ldDt();
+            };
+
+            const watchdog = setTimeout(() => {
+                finish(true, 'Permintaan simpan SES mengambil masa terlalu lama. Sila refresh dan cuba semula.');
+            }, 30000);
+
+            google.script.run
+                .withSuccessHandler(r => {
+                    const msg = String(r || 'Data SES disimpan.');
+                    finish(false, msg);
+                })
+                .withFailureHandler(err => {
+                    const msg = (err && err.message) ? err.message : String(err || 'Ralat tidak diketahui');
+                    finish(true, 'Ralat simpan SES: ' + msg);
+                })
+                .saveStudentSES(data);
+        }
+        // --- PENGESAHAN MARKAH (sama seperti parseMark dalam JS_Logic.html) ---
+        // 'empty' | 'th' | 'ok' (nombor 0-100) | 'invalid' (cth "35abc", "AB", 150)
+        function parseMark(raw) {
+            if (raw === undefined || raw === null) return { status: 'empty', value: null };
+            if (typeof raw === 'number') {
+                return (Number.isFinite(raw) && raw >= 0 && raw <= 100) ? { status: 'ok', value: raw } : { status: 'invalid', value: null };
+            }
+            const str = String(raw).trim().replace(/^'+/, '');
+            if (str === '' || str === '-') return { status: 'empty', value: null };
+            const up = str.toUpperCase();
+            if (up === 'TH' || up === 'T') return { status: 'th', value: null };
+            const num = Number(str.replace(',', '.'));
+            if (!Number.isFinite(num) || num < 0 || num > 100) return { status: 'invalid', value: null };
+            return { status: 'ok', value: num };
+        }
+        function markNum(raw) { const p = parseMark(raw); return p.status === 'ok' ? p.value : null; }
+
+        // --- KEMASKINI FUNGSI SAVE (INDEX.HTML) ---
+
+        function saveM() {
+            const payload = [];
+            const subjekSemasa = val('mf-s');
+
+            // 0. Sekat simpan jika ada markah tidak sah (bukan nombor 0-100 atau TH)
+            const invalidInputs = [...document.querySelectorAll('.mark-input')].filter(i => parseMark(i.value).status === 'invalid');
+            document.querySelectorAll('.mark-input').forEach(i => i.classList.remove('mark-invalid'));
+            if (invalidInputs.length) {
+                invalidInputs.forEach(i => i.classList.add('mark-invalid'));
+                invalidInputs[0].focus();
+                return showNotification(invalidInputs.length + ' markah tidak sah (mesti nombor 0-100 atau TH). Sila betulkan kotak bertanda merah.', 'error');
+            }
+
+            // 1. Kumpul Markah AR / Peperiksaan Biasa (Input Biasa)
+            // TH dibenarkan untuk semua peperiksaan termasuk TOV (sebelum ini TOV TH dipaksa jadi 0,
+            // yang merosakkan G-Risk, delta markah dan unjuran OTR).
+            document.querySelectorAll('.mark-input').forEach(i => {
+                const pm = parseMark(i.value);
+                let markahVal = "";
+                if (pm.status === 'th') markahVal = 'TH';
+                else if (pm.status === 'ok') markahVal = String(pm.value);
+                payload.push({
+                    noKp: i.dataset.k,
+                    subjek: i.dataset.s,
+                    exam: i.dataset.e,
+                    markah: markahVal,
+                    gred: "" // Biar backend kira gred
+                });
+            });
+
+            // 2. Kumpul Markah OTR (Auto)
+            document.querySelectorAll('span[id^="otr-v-"]').forEach(s => {
+                const valOTR = s.innerText.trim();
+                const parts = s.id.split('-');
+                const kp = parts[2];
+                const otrIdx = parseInt(parts[3]);
+                const markahOTR = (valOTR !== '-' && valOTR !== '') ? valOTR : "";
+                payload.push({
+                    noKp: kp,
+                    subjek: subjekSemasa,
+                    exam: `OTR${otrIdx + 1}`,
+                    markah: markahOTR,
+                    gred: ""
+                });
+            });
+
+            // 3. SPM: hantar gred sahaja. Backend akan jana markah proxy.
+            document.querySelectorAll('.spm-select').forEach(s => {
+                payload.push({
+                    noKp: s.dataset.k,
+                    subjek: s.dataset.s,
+                    exam: s.dataset.e, // Iaitu 'SPM'
+                    markah: "",
+                    gred: s.value ? s.value.trim() : ""
+                });
+            });
+
+            if (!payload.length) return showNotification('Tiada data untuk disimpan', 'warning');
+
+            lockBtn('btn-sv', 'Menyimpan...');
+            google.script.run
+                .withSuccessHandler(r => {
+                    showNotification(r, 'success');
+                    ldDt();
+                    unlockBtn('btn-sv', `<i data-lucide="save" class="w-4 h-4"></i><span>Simpan</span>`);
+                    lucide.createIcons();
+                })
+                .withFailureHandler(err => {
+                    showNotification("Ralat menyimpan markah: " + err.message, "error");
+                    unlockBtn('btn-sv', `<i data-lucide="save" class="w-4 h-4"></i><span>Simpan</span>`);
+                    lucide.createIcons();
+                })
+                .saveBulkMarks(payload);
+        }
+        function getG(v) { 
+            const pm = parseMark(v);
+            if (pm.status === 'th') return 'TH';
+            if (pm.status !== 'ok') return "-"; 
+            v = Math.round(pm.value); // julat gred ialah nombor bulat 
+            const l = GD.gredList; 
+            for (let i = 0; i < l.length; i++)if (v >= l[i].MIN && v <= l[i].MAX) return l[i].GRED; 
+            return "G"; 
+        }
+        function upG(e) { 
+            let val = e.value.trim().toUpperCase();
+            if (val === 'T' || val === 'TH') { 
+                e.value = 'TH'; 
+                val = 'TH'; 
+            }
+            const pmChk = parseMark(val);
+            e.classList.toggle('mark-invalid', pmChk.status === 'invalid');
+            if (pmChk.status === 'invalid') showNotification('Markah mesti nombor 0-100 atau TH.', 'warning');
+            const g = getG(val), b = el(`g-${e.dataset.k}-${e.dataset.e}`); 
+            if (b) { b.innerText = g; b.className = `badge-gred gred-${g.replace('+', '_plus').replace('-', '_minus')}`; } 
+            if (e.dataset.e !== 'TOV' && e.dataset.e !== 'ETR') updInd(e.dataset.k); 
+        }
+        function recalcOTR(e) { 
+            upG(e); 
+            doCalc(e.dataset.k); 
+        }
+        function doCalc(kp) { 
+            const tovEl = document.querySelector(`input[data-k="${kp}"][data-e="TOV"]`), etrEl = document.querySelector(`input[data-k="${kp}"][data-e="ETR"]`); 
+            if (!tovEl || !etrEl) return; 
+            const tov = markNum(tovEl.value), etr = markNum(etrEl.value); 
+            if (tov !== null && etr !== null) { 
+                const steps = EXAM_ORD.indexOf('ETR'); const inc = (etr - tov) / steps; 
+                for (let i = 0; i < steps; i++) { 
+                    const val = Math.round(tov + (inc * (i + 1))), vEl = el(`otr-v-${kp}-${i}`), gEl = el(`otr-g-${kp}-${i}`); 
+                    if (vEl) vEl.innerText = val; 
+                    if (gEl) { const g = getG(val); gEl.innerText = g; gEl.className = `badge-gred scale-75 gred-${g.replace('+', '_plus').replace('-', '_minus')}`; } 
+                } 
+                updInd(kp); 
+            } else {
+                // If TOV or ETR is TH, hide OTRs
+                const steps = EXAM_ORD.indexOf('ETR');
+                for (let i = 0; i < steps; i++) {
+                    const vEl = el(`otr-v-${kp}-${i}`), gEl = el(`otr-g-${kp}-${i}`), indEl = el(`otr-i-${kp}-${i}`);
+                    if (vEl) vEl.innerText = '-';
+                    if (gEl) { gEl.innerText = '-'; gEl.className = 'badge-gred scale-75 gred-_minus'; }
+                    if (indEl) indEl.innerHTML = '';
+                }
+            } 
+        }
+        function updInd(kp) { const steps = EXAM_ORD.indexOf('ETR'); for (let i = 0; i < steps; i++) { const otrEl = el(`otr-v-${kp}-${i}`); if (!otrEl || otrEl.innerText === '-' || otrEl.innerText === '') continue; const otrVal = parseFloat(otrEl.innerText), arCode = EXAM_ORD[i + 1], arInput = document.querySelector(`input[data-k="${kp}"][data-e="${arCode}"]`), indEl = el(`otr-i-${kp}-${i}`); if (!indEl) continue; if (arInput && arInput.value !== '') { const diff = parseFloat(arInput.value) - otrVal; if (diff > 0) indEl.innerHTML = `<span class="ind-pos">▲+${diff}</span>`; else if (diff < 0) indEl.innerHTML = `<span class="ind-neg">▼${diff}</span>`; else indEl.innerHTML = `<span class="text-slate-400 font-bold">=0</span>`; } else indEl.innerHTML = ''; } }
+        function lockBtn(id, txt) { const b = el(id); if (b) { b.classList.add('btn-disabled'); b.disabled = true; b.innerHTML = `<div class="loader mr-2 border-white border-t-transparent"></div>${txt}`; } }
+        function unlockBtn(id, h) { const b = el(id); if (b) { b.classList.remove('btn-disabled'); b.disabled = false; b.innerHTML = h; } }
+        function exportToExcel() { const k = val('mf-k'), s = val('mf-s'); if (!k || !s) return; const finalCode = getFinalExamCode(); const st = GD.murid.filter(m => (m.SUBJEK_DIAMBIL || "").split(',').map(x => x.trim()).includes(s) && (k === 'ALL' || m.KELAS == k)); let csv = "\uFEFFNama,KP,Kelas,Mata Pelajaran"; EXAM_ORD.forEach((ex, idx) => { csv += `,${ex}`; if (ex !== 'ETR' && ex !== finalCode && EXAM_ORD[idx + 1] !== 'ETR' && EXAM_ORD[idx + 1] !== finalCode) csv += `,OTR${idx + 1}`; }); csv += "\n"; st.forEach(m => { let row = `"${m.NAMA}","'${m.NO_KP}","${m.KELAS}","${s}"`; let arVals = EXAM_ORD.map(ex => { const x = GD.markah.find(z => String(z.NO_KP) === String(m.NO_KP) && z.KOD_SUBJEK == s && z.KOD_EXAM == ex); return x ? markNum(x.MARKAH) : null; }); let otrVals = []; const tov = arVals[0], etr = arVals[EXAM_ORD.indexOf('ETR')]; if (tov !== null && etr !== null) { const step = (etr - tov) / (EXAM_ORD.indexOf('ETR')); otrVals = EXAM_ORD.map((_, i) => Math.round(tov + (step * i))); } EXAM_ORD.forEach((ex, idx) => { const mk = GD.markah.find(x => String(x.NO_KP) === String(m.NO_KP) && x.KOD_SUBJEK == s && x.KOD_EXAM == ex); row += `,${mk ? mk.MARKAH : ''}`; if (ex !== 'ETR' && ex !== finalCode && EXAM_ORD[idx + 1] !== 'ETR' && EXAM_ORD[idx + 1] !== finalCode) row += `,${otrVals[idx + 1] !== undefined ? otrVals[idx + 1] : ''}`; }); csv += row + "\n"; }); const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", `Markah_${k}_${s}.csv`); link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+        let csvHeaders = []; function analyzeCSV() { const f = el('imp-file').files[0]; if (!f) return showNotification("Pilih fail", "warning"); const r = new FileReader(); r.onload = function (e) { const lines = e.target.result.split(/\r\n|\n/); if (lines.length < 1) return showNotification("Fail kosong", "warning"); const hLine = lines[0], sep = (hLine.split(';').length > hLine.split(',').length) ? ';' : ','; csvHeaders = hLine.split(sep).map(h => h.replace(/^"|"$/g, '').trim()); const kpSel = el('imp-kp-col'); kpSel.innerHTML = ''; csvHeaders.forEach(h => kpSel.innerHTML += `<option value="${h}">${h}</option>`); const sl = el('imp-sub-list'); sl.innerHTML = ''; GD.subjek.forEach(s => { let det = ""; const match = csvHeaders.find(h => h.toUpperCase() === s.SINGKATAN.toUpperCase() || h.toUpperCase() === s.NAMA.toUpperCase()); if (match) det = match; sl.innerHTML += `<div class="px-3 py-2 flex items-center justify-between text-xs border-b border-white/50"><span class="font-bold text-slate-700 w-1/3">${s.SINGKATAN}</span><select class="imp-map input-std h-8 w-2/3 text-xs ${det ? 'border-green-500 bg-green-50' : ''}" data-sub="${s.SINGKATAN}"><option value="">- Abai -</option>${csvHeaders.map(h => `<option value="${h}" ${h === det ? 'selected' : ''}>${h}</option>`).join('')}</select></div>`; }); el('imp-map-area').classList.remove('hidden'); el('btn-ana').classList.add('hidden'); el('btn-run').classList.remove('hidden'); }; r.readAsText(f); }
+        function runImport() {
+            const f = el('imp-file').files[0];
+            const exam = val('imp-exam');
+            const kpHead = val('imp-kp-col');
+
+            const mapping = {};
+            document.querySelectorAll('.imp-map').forEach(s => {
+                if (s.value) mapping[s.value] = s.dataset.sub;
+            });
+
+            if (Object.keys(mapping).length === 0) return showNotification("Sila padankan mata pelajaran.", "warning");
+
+            lockBtn('btn-run', 'Sedang Import...');
+            ld(1);
+
+            const r = new FileReader();
+            r.onload = function (e) {
+                // FIX: Guna split untuk dapatkan Raw Base64 yang bersih
+                const content = e.target.result;
+                const base64 = content.split(',')[1];
+
+                const payload = {
+                    file: base64,
+                    examCode: exam,
+                    kpHeader: kpHead,
+                    mapping: mapping
+                };
+
+                google.script.run.withSuccessHandler(res => {
+                    unlockBtn('btn-run', `<i data-lucide="check-circle" class="w-4 h-4"></i><span>Mula Import</span>`);
+                    lucide.createIcons();
+                    ld(0);
+
+                    if (res.status === 'success') {
+                        showNotification(res.msg, 'success');
+                        el('imp-mod').classList.add('hidden');
+                        GD = res.newData;
+                    } else {
+                        showNotification("Ralat: " + res.msg, 'error');
+                    }
+                }).processExamImport(payload);
+            };
+            // FIX: Baca sebagai DataURL (Binary selamat) bukannya Text
+            r.readAsDataURL(f);
+        }
+
+        // --- UPDATE: FUNGSI SIMPAN MURID DENGAN JANTINA ---
+        function svStu() {
+            const s = {
+                noKp: val('st-kp'),
+                nama: val('st-nm'),
+                kelas: val('st-kl'),
+                jantina: val('st-jan') // Menghantar nilai Jantina
+            };
+            ld(1);
+            google.script.run.withSuccessHandler(() => {
+                ldDt();
+                el('add-stu').classList.add('hidden');
+                // Reset form
+                el('st-kp').value = ''; el('st-nm').value = ''; el('st-kl').value = ''; el('st-jan').value = '';
+                showNotification('Murid berjaya didaftarkan!', 'success');
+            }).saveStudent(s);
+        }
+
+        // --- NEW FUNCTIONS FOR STUDENT IMPORT ---
+        function downloadStudentTemplate() {
+            if (typeof XLSX === 'undefined') return showNotification('Library Excel belum dimuatkan. Sila muat semula halaman.', 'error');
+            const header = ["NoKP", "Nama", "Kelas", "Jantina"];
+            const example = [
+                ["010101010101", "Ali Bin Abu", "5 BESTARI", "L"],
+                ["020202020202", "Siti Binti Ali", "5 BESTARI", "P"]
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet([header, ...example]);
+            // Pastikan turus NoKP (Lajur A / Index 0) ditetap pada format Teks mengekalkan angka '0' di hadapan
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                const cell = ws[XLSX.utils.encode_cell({ c: 0, r: R })];
+                if (cell) cell.z = '@';
+            }
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Templat Murid");
+            XLSX.writeFile(wb, "template_murid.xlsx");
+        }
+
+        function processStudentImport() {
+            const f = el('imp-stu-file').files[0];
+            if (!f) return showNotification("Sila pilih fail Excel dahulu.", "warning");
+            if (typeof XLSX === 'undefined') return showNotification("Library Excel belum dimuatkan. Sila muat semula.", "error");
+
+            lockBtn('btn-imp-stu', 'Memproses...');
+            ld(1);
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+
+                    // Convert sheet to JSON array
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { raw: false, defval: "" });
+                    const students = [];
+
+                    for (let i = 0; i < rows.length; i++) {
+                        const r = rows[i];
+                        // Padankan tajuk Excel secara luwes
+                        const kp = r['NoKP'] || r['NOKP'] || r['NO KP'] || r['KP'] || '';
+                        const nama = r['Nama'] || r['NAMA'] || '';
+                        const kelas = r['Kelas'] || r['KELAS'] || '';
+                        const jantina = r['Jantina'] || r['JANTINA'] || '';
+
+                        if (kp !== "" && nama !== "") {
+                            students.push({
+                                noKp: String(kp).replace(/'/g, '').trim(),
+                                nama: String(nama).trim(),
+                                kelas: String(kelas).toUpperCase().trim(),
+                                jantina: String(jantina).toUpperCase().trim()
+                            });
+                        }
+                    }
+
+                    if (students.length === 0) {
+                        unlockBtn('btn-imp-stu', 'Proses Import');
+                        return showNotification("Tiada data murid dijumpai dalam fail Excel.", "warning");
+                    }
+
+                    // Hantar ke Backend secara PUKAL (Batch Upload)
+                    el('btn-imp-stu').innerHTML = `<div class="loader mr-2 border-white border-t-transparent"></div> Menyimpan ${students.length} murid...`;
+
+                    google.script.run.withSuccessHandler(() => {
+                        unlockBtn('btn-imp-stu', 'Proses Import');
+                        ld(0);
+                        el('imp-stu-mod').classList.add('hidden');
+                        showNotification(`Berjaya import ${students.length} murid secara pukal dari Excel!`, 'success');
+                        ldDt(); // Kemaskini data paparan
+                    }).withFailureHandler((err) => {
+                        showNotification("Ralat semasa import: " + err, 'error');
+                        unlockBtn('btn-imp-stu', 'Proses Import');
+                        ld(0);
+                    }).saveStudentsBatch(students);
+                } catch (err) {
+                    unlockBtn('btn-imp-stu', 'Proses Import');
+                    ld(0);
+                    showNotification("Ralat membaca fail Excel: " + err.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(f);
+        }
+
+        function svGrd() {
+            const o = { id: val('gr-id'), gred: val('gr-nm'), min: val('gr-min'), max: val('gr-max'), status: val('gr-st') };
+            ld(1);
+            google.script.run
+                .withSuccessHandler(d => {
+                    GD = d;
+                    renG();
+                    el('add-grd').classList.add('hidden');
+                    ld(0);
+                })
+                .withFailureHandler(err => {
+                    showNotification("Ralat menyimpan gred: " + err.message, "error");
+                    ld(0);
+                })
+                .saveGred(o);
+        }
+        function renS() { el('lst-sub').innerHTML = GD.subjek.map(s => `<tr><td class="p-2 font-bold text-brand">${s.SINGKATAN}</td><td class="p-2">${s.NAMA}</td><td class="p-2 text-right"><button onclick="delS('${s.ID_SUBJEK}')" class="text-rose-500 hover:scale-110 transition-transform"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join(''); lucide.createIcons() }
+        function addSub() {
+            if (!val('sk') || !val('sn')) return showNotification('Sila isi Singkatan dan Nama', 'warning');
+            ld(1);
+            google.script.run
+                .withSuccessHandler(d => {
+                    GD = d;
+                    el('sk').value = '';
+                    el('sn').value = '';
+                    renS();
+                    ld(0);
+                    showNotification('Subjek berjaya disimpan', 'success');
+                })
+                .withFailureHandler(err => {
+                    showNotification("Ralat menyimpan subjek: " + err.message, "error");
+                    ld(0);
+                })
+                .saveSubjects([{ nama: val('sn'), singkatan: val('sk'), kategori: '' }]);
+        }
+        function delS(i) {
+            showConfirm('Hapus Subjek?', () => {
+                ld(1);
+                google.script.run
+                    .withSuccessHandler(d => {
+                        GD = d;
+                        renS();
+                        ld(0);
+                    })
+                    .withFailureHandler(err => {
+                        showNotification("Ralat menghapus subjek: " + err.message, "error");
+                        ld(0);
+                    })
+                    .deleteSubject(i);
+            });
+        }
+        // Penjejak state untuk edit nama peperiksaan
+        window.editExamState = {};
+
+        window.editExamState = {};
+
+        function renE() {
+            const listEl = el('lst-ex');
+            if (!listEl) return;
+
+            const exams = GD.exam || [];
+            const finalCode = getFinalExamCode();
+
+            // Helper function to render a single exam row
+            function renderExamRow(e, roleLabel, canEdit, canDelete) {
+                const isEditing = window.editExamState[e.ID_EXAM];
+                let codeCol = '';
+                let nameCol = '';
+                let actionCol = '';
+
+                if (isEditing) {
+                    codeCol = `<input type="text" id="edit-ec-${e.ID_EXAM}" value="${e.SINGKATAN}" class="input-std text-xs py-1 px-2 border-brand/50 focus:border-brand w-20 font-bold text-slate-700 uppercase" ${e.SINGKATAN === 'TOV' || e.SINGKATAN === 'ETR' ? 'disabled' : ''}>`;
+                    nameCol = `
+                        <div class="flex gap-1.5 items-center w-full max-w-md">
+                            <input type="text" id="edit-en-${e.ID_EXAM}" value="${e.NAMA_EXAM}" class="input-std text-xs py-1 px-2 border-brand/50 focus:border-brand w-full">
+                            <button onclick="saveExamEdit('${e.ID_EXAM}')" class="p-1 text-emerald-600 hover:bg-emerald-50 rounded" title="Simpan"><i data-lucide="check" class="w-4 h-4"></i></button>
+                            <button onclick="cancelExamEdit('${e.ID_EXAM}')" class="p-1 text-slate-400 hover:bg-slate-50 rounded" title="Batal"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </div>
+                    `;
+                } else {
+                    codeCol = e.SINGKATAN;
+                    nameCol = `
+                        <div class="flex items-center gap-2 group">
+                            <span class="text-slate-600">${e.NAMA_EXAM}</span>
+                            ${canEdit ? `
+                            <button onclick="startExamEdit('${e.ID_EXAM}')" class="text-slate-400 hover:text-brand opacity-0 group-hover:opacity-100 transition-opacity p-0.5" title="Ubah"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+
+                if (canDelete) {
+                    actionCol = `
+                        <div class="flex items-center justify-end gap-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">${roleLabel}</span>
+                            <button onclick="delE('${e.ID_EXAM}')" class="text-rose-500 hover:scale-110 transition-transform p-1 animate-hover" title="Hapus"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    `;
+                } else {
+                    let badgeClass = 'bg-slate-100 text-slate-600 border-slate-200';
+                    const sUpper = e.SINGKATAN.toUpperCase();
+                    if (sUpper === 'TOV') badgeClass = 'bg-blue-50 text-blue-600 border-blue-100';
+                    else if (sUpper === 'ETR') badgeClass = 'bg-amber-50 text-amber-600 border-amber-100';
+                    else if (sUpper === finalCode.toUpperCase()) badgeClass = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+
+                    actionCol = `
+                        <div class="flex items-center justify-end gap-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${badgeClass} border">${roleLabel}</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">Sistem</span>
+                        </div>
+                    `;
+                }
+
+                return `
+                <tr class="border-b border-slate-100 hover:bg-slate-50/30 transition-colors duration-150">
+                    <td class="p-3 font-bold text-slate-700 w-24">${codeCol}</td>
+                    <td class="p-3">${nameCol}</td>
+                    <td class="p-3 text-right">${actionCol}</td>
+                </tr>`;
+            }
+
+            // Grouping lists for rendering
+            const arExams = exams.filter(e => {
+                const s = String(e.SINGKATAN || '').trim().toUpperCase();
+                return s.startsWith('AR') && !isNaN(parseInt(s.replace('AR', '').trim()));
+            }).sort((a, b) => {
+                const numA = parseInt(a.SINGKATAN.replace('AR', '').trim(), 10);
+                const numB = parseInt(b.SINGKATAN.replace('AR', '').trim(), 10);
+                return numA - numB;
+            });
+
+            const otherExams = exams.filter(e => {
+                const s = String(e.SINGKATAN || '').trim().toUpperCase();
+                return s !== 'TOV' && s !== 'ETR' && s !== finalCode.toUpperCase() && !(s.startsWith('AR') && !isNaN(parseInt(s.replace('AR', '').trim())));
+            });
+
+            let html = '';
+
+            // --- 1. TOV (Start) ---
+            const tov = exams.find(e => String(e.SINGKATAN || '').trim().toUpperCase() === 'TOV');
+            if (tov) {
+                html += renderExamRow(tov, 'TOV (Mula)', false, false);
+            } else {
+                html += `<tr><td colspan="3" class="p-3 text-amber-500 font-semibold text-xs">Amaran: Peperiksaan TOV wajib diwujudkan!</td></tr>`;
+            }
+
+            // --- 2. PEPERIKSAAN BERKALA (AR) ---
+            if (arExams.length === 0) {
+                html += `<tr><td colspan="3" class="p-3 text-slate-400 text-center text-xs bg-slate-50/20">Tiada Peperiksaan AR didaftarkan.</td></tr>`;
+            } else {
+                arExams.forEach(e => {
+                    html += renderExamRow(e, 'Pencapaian (AR)', true, true);
+                });
+            }
+
+            // --- 3. TAMBAH AR BUTTON ROW ---
+            html += `
+            <tr class="border-b border-slate-100">
+                <td colspan="3" class="p-3 text-left bg-slate-50/30">
+                    <button onclick="addAR()" class="px-4 py-2 bg-slate-800 text-white font-bold rounded-xl text-xs hover:bg-slate-700 shadow-md flex items-center gap-2 transition-all hover:scale-[1.02]">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> + Tambah AR Seterusnya
+                    </button>
+                </td>
+            </tr>`;
+
+            // --- 4. ETR (Target) ---
+            const etr = exams.find(e => String(e.SINGKATAN || '').trim().toUpperCase() === 'ETR');
+            if (etr) {
+                html += renderExamRow(etr, 'Sasaran (ETR)', true, false);
+            } else {
+                html += `<tr><td colspan="3" class="p-3 text-amber-500 font-semibold text-xs">Amaran: Peperiksaan ETR wajib diwujudkan!</td></tr>`;
+            }
+
+            // --- 5. SPM (Final) ---
+            const spm = exams.find(e => String(e.SINGKATAN || '').trim().toUpperCase() === finalCode.toUpperCase());
+            if (spm) {
+                html += renderExamRow(spm, 'Peperiksaan Sebenar', true, false);
+            } else {
+                html += `<tr><td colspan="3" class="p-3 text-amber-500 font-semibold text-xs">Amaran: Peperiksaan utama wajib diwujudkan!</td></tr>`;
+            }
+
+            // --- 6. PEPERIKSAAN LAIN ---
+            otherExams.forEach(e => {
+                html += renderExamRow(e, 'Lain-lain', true, true);
+            });
+
+            listEl.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function startExamEdit(id) {
+            window.editExamState[id] = true;
+            renE();
+        }
+
+        function cancelExamEdit(id) {
+            window.editExamState[id] = false;
+            renE();
+        }
+
+        function saveExamEdit(id) {
+            const inputName = el(`edit-en-${id}`);
+            const inputCode = el(`edit-ec-${id}`);
+            if (!inputName || !inputCode) return;
+            const newName = inputName.value.trim();
+            const newCode = inputCode.value.trim().toUpperCase();
+            if (!newCode) return showNotification('Singkatan peperiksaan tidak boleh kosong.', 'warning');
+            if (!newName) return showNotification('Nama peperiksaan tidak boleh kosong.', 'warning');
+
+            ld(1);
+            google.script.run.withSuccessHandler(d => {
+                GD = d;
+                window.editExamState[id] = false;
+                iniD();
+                renE();
+                ld(0);
+                showNotification('Peperiksaan berjaya dikemaskini!', 'success');
+            }).withFailureHandler(err => {
+                ld(0);
+                showNotification('Gagal mengemaskini: ' + err, 'error');
+            }).saveExams([{ id: id, nama: newName, singkatan: newCode }]);
+        }
+
+        function addAR() {
+            const exams = GD.exam || [];
+            let maxAR = 0;
+            exams.forEach(e => {
+                const s = String(e.SINGKATAN || '').trim().toUpperCase();
+                const match = s.match(/^AR\s*(\d+)$/);
+                if (match) {
+                    const num = parseInt(match[1], 10);
+                    if (num > maxAR) maxAR = num;
+                }
+            });
+
+            const nextAR = maxAR + 1;
+            const singkatan = `AR ${nextAR}`;
+            const nama = `AR ${nextAR}`;
+
+            ld(1);
+            google.script.run.withSuccessHandler(d => {
+                GD = d;
+                renE();
+                ld(0);
+                showNotification(`Berjaya menambah ${singkatan}! Anda kini boleh menukar namanya dengan menekan ikon pensel.`, 'success');
+            }).withFailureHandler(err => {
+                ld(0);
+                showNotification('Gagal menambah AR: ' + err, 'error');
+            }).saveExams([{ nama: nama, singkatan: singkatan }]);
+        }
+
+        function delE(i) {
+            showConfirm('Hapus Peperiksaan?', () => {
+                ld(1);
+                google.script.run
+                    .withSuccessHandler(d => {
+                        GD = d;
+                        renE();
+                        ld(0);
+                    })
+                    .withFailureHandler(err => {
+                        showNotification("Ralat menghapus peperiksaan: " + err.message, "error");
+                        ld(0);
+                    })
+                    .deleteExam(i);
+            });
+        }
+        function renG() { el('lst-grd').innerHTML = GD.gredList.sort((a, b) => b.MIN - a.MIN).map(g => `<tr class="border-b border-white/50"><td class="p-3 font-bold">${g.GRED}</td><td class="p-3">${g.MIN}-${g.MAX}</td><td class="p-3">${g.STATUS}</td><td class="p-3 text-center"><button onclick="delG('${g.ID_GRED}')" class="text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join(''); lucide.createIcons() }
+        function delG(i) {
+            showConfirm('Hapus Gred?', () => {
+                ld(1);
+                google.script.run
+                    .withSuccessHandler(d => {
+                        GD = d;
+                        renG();
+                        ld(0);
+                    })
+                    .withFailureHandler(err => {
+                        showNotification("Ralat menghapus gred: " + err.message, "error");
+                        ld(0);
+                    })
+                    .deleteGred(i);
+            });
+        }
+        function rstG() { el('gr-id').value = ''; el('gr-nm').value = ''; el('gr-min').value = ''; el('gr-max').value = ''; el('gr-st').value = '' }
+        function popK() { const s = el('fil-k'); s.innerHTML = '<option value="">-Kelas-</option><option value="ALL">Semua Kelas</option>'; GD.kelas.forEach(c => s.innerHTML += `<option>${c}</option>`) }
+        function renMat() {
+            const k = val('fil-k'), t = el('mat-b');
+            if (!k) return el('mat-h').innerHTML = '<th>Pilih Kelas</th>';
+            const ml = GD.murid.filter(m => k === 'ALL' || m.KELAS == k), sl = GD.subjek;
+            let h = '<th class="p-3 sticky-col z-40 bg-white/80 backdrop-blur shadow-sm border-b align-bottom h-32">Nama Murid</th>';
+            sl.forEach(s => {
+                const sCode = String(s.SINGKATAN || '').trim().toUpperCase();
+                h += `<th class="w-10 bg-white/50 border-l border-white text-center p-0 align-bottom h-32 border-b"><div class="th-vertical w-10 flex items-end justify-center pb-2"><span class="vertical-text text-xs font-bold text-slate-600" style="writing-mode: vertical-rl; transform: rotate(180deg);">${sCode}</span></div><div class="border-t py-1"><input type="checkbox" onclick="togC(this,'${sCode}')"></div></th>`;
+            });
+            h += '<th class="text-center h-32 align-bottom border-b pb-2">Aksi</th>';
+            el('mat-h').innerHTML = h;
+            t.innerHTML = ml.map(m => {
+                let r = `<tr><td class="p-3 sticky-col bg-white/80 backdrop-blur border-b font-medium text-xs whitespace-nowrap">${m.NAMA}</td>`;
+                const tk = (m.SUBJEK_DIAMBIL || "").split(',').map(s => String(s || '').trim().toUpperCase()).filter(Boolean);
+                sl.forEach(s => {
+                    const sCode = String(s.SINGKATAN || '').trim().toUpperCase();
+                    const isChecked = tk.includes(sCode) ? 'checked' : '';
+                    r += `<td class="border-l border-b text-center border-white/50"><input type="checkbox" class="mc" data-k="${m.NO_KP}" data-s="${sCode}" ${isChecked}></td>`;
+                });
+                r += `<td class="border-b text-center border-white/50"><button onclick="delStu('${m.NO_KP}')" class="text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`;
+                return r;
+            }).join('');
+            lucide.createIcons();
+        }
+        function togC(e, s) {
+            const sCode = String(s || '').trim().toUpperCase();
+            document.querySelectorAll(`.mc[data-s="${sCode}"]`).forEach(c => c.checked = e.checked);
+        }
+        function saveMat() {
+            lockBtn('btn-sv-mat', 'Simpan...');
+            const s = {};
+            document.querySelectorAll('.mc').forEach(c => {
+                const k = c.dataset.k;
+                if (!s[k]) s[k] = [];
+                if (c.checked) {
+                    const subCode = String(c.dataset.s || '').trim().toUpperCase();
+                    if (subCode && !s[k].includes(subCode)) s[k].push(subCode);
+                }
+            });
+            const p = Object.keys(s).map(k => ({ noKp: k, subjects: s[k].join(',') }));
+            const curClass = val('fil-k');
+
+            google.script.run
+                .withSuccessHandler(r => {
+                    showNotification(r, 'success');
+                    ld(1);
+                    google.script.run
+                        .withSuccessHandler(d => {
+                            if (d && !d.error) {
+                                GD = d;
+                                SETUP = d.setup;
+                                applyTheme();
+                                iniD();
+                                if (curClass && el('fil-k')) {
+                                    el('fil-k').value = curClass;
+                                }
+                                renMat();
+                            }
+                            ld(0);
+                            unlockBtn('btn-sv-mat', 'Simpan Mata Pelajaran');
+                        })
+                        .withFailureHandler(err => {
+                            ld(0);
+                            unlockBtn('btn-sv-mat', 'Simpan Mata Pelajaran');
+                        })
+                        .getInitialData();
+                })
+                .withFailureHandler(err => {
+                    showNotification("Ralat menyimpan pemetaan subjek: " + err.message, "error");
+                    unlockBtn('btn-sv-mat', 'Simpan Mata Pelajaran');
+                })
+                .saveMapping(p);
+        }
+        function delStu(k) {
+            showConfirm('Hapus Murid?', () => {
+                ld(1);
+                const curClass = val('fil-k');
+                google.script.run
+                    .withSuccessHandler(d => {
+                        GD = d;
+                        iniD();
+                        if (curClass && el('fil-k')) {
+                            el('fil-k').value = curClass;
+                        }
+                        renMat();
+                        ld(0);
+                    })
+                    .withFailureHandler(err => {
+                        showNotification("Ralat menghapus murid: " + err.message, "error");
+                        ld(0);
+                    })
+                    .deleteStudent(k);
+            });
+        }
+
+        function delClass() {
+            const k = val('fil-k');
+            if (!k || k === 'ALL') return showNotification("Sila pilih satu kelas sahaja untuk dipadam.", "warning");
+            
+            showConfirm(`Adakah anda pasti mahu memadam KESELURUHAN murid dalam kelas ${k} serta SEMUA rekod markah berkaitan? Tindakan ini tidak boleh diundur!`, () => {
+                ld(1);
+                google.script.run
+                    .withSuccessHandler(d => {
+                        GD = d;
+                        iniD(); // Refresh dropdown list
+                        renMat(); // Refresh table
+                        ld(0);
+                        showNotification(`Berjaya memadam kelas ${k}.`, 'success');
+                    })
+                    .withFailureHandler(err => {
+                        showNotification("Ralat memadam kelas: " + err.message, "error");
+                        ld(0);
+                    })
+                    .deleteStudent("CMD_DEL_CLASS:" + k);
+            });
+        }
+
+        // --- PADAM MARKAH PEPERIKSAAN PUKAL ---
+        function clearExamMarksReq() {
+            const exId = val('imp-exam');
+            if (!exId) {
+                showNotification("Sila pilih Exam Sasaran dahulu untuk dipadamkan rekodnya.", "warning");
+                return;
+            }
+            const exName = el('imp-exam').options[el('imp-exam').selectedIndex].text;
+            clearSpecificExamMarksReq(exId, exName);
+        }
+
+        // --- NEW FUNC: Buka Modal Import & Render Status ---
+        function openImportModal() {
+            renderImportStatus();
+            openModal('imp-mod');
+        }
+
+        function renderImportStatus() {
+            const statusContainer = el('imp-status-list');
+            if (!statusContainer) return;
+            statusContainer.innerHTML = '';
+
+            // Kira jumlah markah mengikut peperiksaan
+            const counts = {};
+            EXAM_ORD.forEach(ex => counts[ex] = 0);
+
+            // GD.markah structure: { NO_KP, KOD_SUBJEK, KOD_EXAM, MARKAH, GRED }
+            GD.markah.forEach(m => {
+                if (counts[m.KOD_EXAM] !== undefined) {
+                    counts[m.KOD_EXAM]++;
+                }
+            });
+
+            // Jana UI
+            EXAM_ORD.forEach(ex => {
+                const count = counts[ex];
+                if (count > 0) {
+                    statusContainer.innerHTML += `
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 flex flex-col relative group transition-all hover:shadow-md hover:border-blue-300">
+                            <span class="text-xs font-bold text-blue-900 truncate pr-6">${ex}</span>
+                            <span class="text-[10px] font-medium text-blue-600">${count} rekod</span>
+                            <button onclick="clearSpecificExamMarksReq('${ex}', '${ex}')" class="absolute top-2 right-2 text-rose-400 hover:text-rose-600 hover:bg-rose-100 p-1 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    statusContainer.innerHTML += `
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col opacity-60 grayscale filter">
+                            <span class="text-xs font-bold text-slate-500 truncate">${ex}</span>
+                            <span class="text-[10px] text-slate-400">0 rekod</span>
+                        </div>
+                    `;
+                }
+            });
+            lucide.createIcons();
+        }
+
+        function clearSpecificExamMarksReq(exId, exName) {
+            showConfirm(`Adakah anda pasti mahu memadam kesemua markah murid bagi peperiksaan ${exName}? Tindakan ini tidak boleh diundur.`, () => {
+                ld(1);
+                google.script.run
+                    .withSuccessHandler(res => {
+                        showNotification(res, 'success');
+                        // Reload data
+                        google.script.run
+                            .withSuccessHandler(d => {
+                                GD = d;
+                                renderImportStatus(); // Update status UI
+                                if (!el('imp-mod').classList.contains('hidden')) {
+                                    // if table is open behind
+                                    renM(true);
+                                }
+                                ld(0);
+                            })
+                            .withFailureHandler(err => {
+                                showNotification("Ralat memuat semula data setelah padam: " + err.message, "error");
+                                ld(0);
+                            })
+                            .getInitialData();
+                    })
+                    .withFailureHandler(err => {
+                        showNotification("Ralat memadam markah: " + err.message, "error");
+                        ld(0);
+                    })
+                    .deleteExamMarks(exId);
+            });
+        }
+    </script>
+
+    <!-- GLOBAL LOADING OVERLAY -->
+    <div id="global-loading-overlay" class="hidden">
+        <div class="spinner-box">
+            <div class="main-spinner"></div>
+            <span class="loading-text">MEMPROSES DATA...</span>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -351,6 +351,53 @@ nav.side a .tick{display:inline-grid}
 .flow-new button.on{border-style:solid}
 @media (max-width:600px){.tour{display:grid;grid-template-columns:auto 1fr;gap:10px}.tour > div:last-child{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;flex-direction:row-reverse}.tour .count{margin:0}.pager{flex-wrap:wrap}}
 @media (max-width:640px){.flow{grid-template-columns:1fr}.stack button small{display:none}}
+.demo-link{font-weight:700;white-space:nowrap}
+.paths{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+
+.print-spots{display:none}
+/* ===== Cetakan A4 ===== */
+@media print{
+  @page{size:A4;margin:14mm 12mm 14mm 12mm}
+  :root,:root[data-theme="dark"]{--bg:#fff;--surface:#fff;--surface-2:#f4f5f7;--ink:#111;--ink-2:#222;--muted:#555;--line:#cfd4dc;--brand:#3730a3;--brand-ink:#fff;--brand-soft:#eceefe;--good:#047857;--good-soft:#e9f7f0;--bad:#b91c1c;--bad-soft:#fcecec;--warn:#92400e;--warn-soft:#fdf6e7;--shadow:none}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{background:#fff!important;color:#111;font-size:10.5pt;line-height:1.45}
+  .wrap{max-width:none!important;padding:0!important}
+  .layout{display:block!important;padding:0!important}
+  .top,nav.side,.skip,.tabs,.lab,.done-btn,.mod-foot,.to-top,.hero-search,.chips,.paths,.tour,.pop,.lightbox,.ex-viz,.myth-tools,.btn,.demo-link,.shot-hint,footer,.where{display:none!important}
+  .panel:has(> .lab),.panel:has(> .quiz){display:none!important}
+  .hero{background:none!important;color:#111!important;box-shadow:none!important;border-radius:0;padding:0 0 4mm!important;border-bottom:2px solid #111;margin-bottom:4mm}
+  .hero h1{font-size:20pt}.hero p{font-size:11pt;max-width:none;opacity:1}
+  section.mod{box-shadow:none!important;border:0!important;border-radius:0!important;padding:0!important;margin:0 0 4mm!important;break-inside:auto!important;background:#fff!important}
+  #gp,#modules section.mod,#mitos,#semak{break-before:page}
+  .mod-head{break-after:avoid;margin-bottom:2mm}
+  .mod-head h2{font-size:15pt}.mod-head .q{font-size:10pt}
+  .mod-num{width:28px;height:28px;border-radius:8px}
+  h2,h3,.ck-h{break-after:avoid}
+  .panel{display:block!important;margin-top:3mm;animation:none!important}
+  .panel[data-label]::before{content:attr(data-label);display:block;font-weight:800;font-size:10pt;letter-spacing:.06em;text-transform:uppercase;color:var(--brand);border-bottom:1px solid var(--line);padding-bottom:1mm;margin:5mm 0 2mm;break-after:avoid}
+  .shot-cap{font-size:9pt;margin-bottom:1mm}
+  .shot-wrap{break-inside:avoid;margin:0 0 3mm}
+  .shot{border:1px solid var(--line)!important;border-radius:6px;overflow:hidden;cursor:auto;max-width:100%}
+  .shot img{max-height:175mm;width:auto!important;max-width:100%;margin:0 auto;border-radius:0}
+  .spot{width:18px!important;height:18px!important;font-size:8pt!important;border-width:1.5px!important;box-shadow:none!important}
+  .spot::before,.spot::after{display:none!important}
+  .spot.on{background:var(--brand)!important;transform:translate(-50%,-50%)!important}
+  .print-spots{display:block!important;columns:2;column-gap:6mm;font-size:8.5pt;line-height:1.35;margin:2mm 0 0;padding-left:5mm}
+  .print-spots li{break-inside:avoid;margin-bottom:1.2mm}
+  .grid3{grid-template-columns:repeat(3,1fr)!important;gap:3mm!important}
+  .pcard{padding:3mm!important}.pcard .ic{width:30px;height:30px}
+  .pcard,.warn-item,.ex-box,.ex-30,.callout,.ask,.kpi,.steps li,.myth,tr{break-inside:avoid}
+  .warn-list{gap:2mm}.warn-item{padding:2mm 3mm}
+  .tbl{overflow:visible!important;border-color:var(--line)}
+  table{font-size:9pt}th,td{padding:3px 6px}
+  .myth-list{border-color:var(--line)}
+  .myth-a{display:grid!important}.myth-q{min-height:0;padding:2mm 3mm}.myth-a{padding:0 3mm 2mm}
+  .myth-q .chev{display:none}.myth.open .myth-q .txt{text-decoration:none;color:inherit}
+  .ck{padding:1.5mm 0;min-height:0}
+  .scale div{padding:6px 0}
+  a{color:inherit;text-decoration:none}
+  .explain{gap:3mm}
+}
 </style>
 </head>
 <body>
@@ -382,6 +429,7 @@ nav.side a .tick{display:inline-grid}
       <a class="path" href="#prinsip"><span class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg></span><div><b>Baru menggunakan SPPM?</b><span>Mula dengan 6 prinsip dan peraturan GP.</span></div></a>
       <a class="path" href="#semak"><span class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span><div><b>Ada mesyuarat esok?</b><span>Terus ke senarai semak mesyuarat.</span></div></a>
       <a class="path" href="#mitos"><span class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span><div><b>Ragu-ragu dengan angka?</b><span>Semak 7 mitos membaca data.</span></div></a>
+      <a class="path" href="demo/dashboard.html?page=dashboard" target="_blank" rel="noopener"><span class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/><path d="m7 13 3-3 3 3 4-5"/></svg></span><div><b>Cuba Dashboard demo</b><span>Data rekaan, selamat untuk diklik. Dibuka di tab baharu.</span></div></a>
     </div>
 
     <section class="mod" id="prinsip" data-title="Enam prinsip asas" data-grp="Mula di sini">
@@ -434,7 +482,7 @@ nav.side a .tick{display:inline-grid}
       <div class="row" style="margin-top:16px"><button class="btn" onclick="window.print()"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg> Cetak panduan</button><button class="btn ghost" id="ckReset"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Kosongkan tanda</button></div>
     </section>
 
-    <footer>Panduan Analisis SPPM · Dibina untuk pentadbir dan guru · Tanda semakan dan kemajuan bacaan disimpan dalam pelayar anda sahaja.</footer>
+    <footer>Panduan Analisis SPPM · <a href="demo/dashboard.html?page=dashboard" target="_blank" rel="noopener">Dashboard demo (data rekaan)</a> · Tanda semakan dan kemajuan bacaan disimpan dalam pelayar anda sahaja.</footer>
   </main>
 </div>
 
@@ -724,9 +772,9 @@ individu:[{img:'img/rumusan.jpg',cap:'Rumusan Keseluruhan · AR2',spots:[
  [74.2,59.3,'AR2 24 vs OTR2 49','Jurang melebar ke 25 markah. Corak menurun berterusan, bukan satu hari yang buruk.'],
  [79.8,78.3,'Semua subjek jatuh serentak','AR2 lebih rendah daripada AR1 dalam semua 7 subjek. Ini isu murid (kehadiran, motivasi, keluarga), bukan isu subjek.']]}]
 };
-const shotHTML=(id,s)=>`<div class="shot-wrap" data-shot="${id}"><p class="shot-cap">${s.cap} · <span class="shot-hint"><span class="hv">halakan tetikus atau </span>klik nombor untuk penerangan, klik gambar untuk zum</span></p>
+const shotHTML=(id,s)=>`<div class="shot-wrap" data-shot="${id}"><p class="shot-cap">${s.cap}<span class="shot-hint"> · <span class="hv">halakan tetikus atau </span>klik nombor untuk penerangan, klik gambar untuk zum</span><span class="demo-link"> · <a href="demo/dashboard.html?page=dashboard" target="_blank" rel="noopener">Cuba dalam demo ↗</a></span></p>
  <div class="shot" role="group" aria-label="Tangkapan skrin: ${s.cap}"><img src="${s.img}" alt="Tangkapan skrin Dashboard SPPM: ${s.cap}" loading="lazy" decoding="async" width="1240" height="${IMG_DIM[s.img]||800}">${s.spots.map((p,i)=>`<button class="spot" style="left:${p[0]}%;top:${p[1]}%" data-i="${i}" aria-label="${i+1}. ${p[2]}" aria-describedby="${id}-pop">${i+1}</button>`).join('')}<div class="pop" id="${id}-pop" role="tooltip" hidden></div></div>
- <div class="tour" aria-live="polite"><div class="num">1</div><div class="txt"><b>${s.spots[0][2]}</b>${s.spots[0][3]}</div><div><div class="nav"><button data-step="-1" aria-label="Penanda sebelum">${svg('left')}</button><button data-step="1" aria-label="Penanda seterusnya">${svg('right')}</button></div><div class="count">1/${s.spots.length}</div></div></div></div>`;
+ <div class="tour" aria-live="polite"><div class="num">1</div><div class="txt"><b>${s.spots[0][2]}</b>${s.spots[0][3]}</div><div><div class="nav"><button data-step="-1" aria-label="Penanda sebelum">${svg('left')}</button><button data-step="1" aria-label="Penanda seterusnya">${svg('right')}</button></div><div class="count">1/${s.spots.length}</div></div></div><ol class="print-spots">${s.spots.map(p=>`<li><b>${p[2]}.</b> ${p[3]}</li>`).join('')}</ol></div>`;
 const shotData=id=>{const [m,k]=id.split(/-(?=\d+$)/);return SHOTS[m][+k]};
 // Papar penerangan terus di sebelah nombor (tidak perlu tatal ke bawah gambar)
 function showPop(shot,p,i){
@@ -821,7 +869,7 @@ $('#modules').innerHTML=MODS.map((m,i)=>{
 <section class="mod" id="${m.id}" data-title="${m.title}" data-grp="${m.grp}">
   <div class="mod-head"><div class="mod-num">${i+1}</div><div><h2>${m.title}</h2><div class="q">Soalan yang dijawab: ${m.q}</div></div><span class="where">Menu: ${m.where}</span></div>
   <div class="tabs" role="tablist" aria-label="Bahagian modul ${m.title}">${panels.map((p,j)=>`<button role="tab" id="${m.id}-t${j}" aria-controls="${m.id}-p${j}" aria-selected="${j===0}" tabindex="${j===0?0:-1}" data-p="${j}">${p.ic?svg(p.ic,'sm'):''}${p.t}</button>`).join('')}</div>
-  ${panels.map((p,j)=>`<div class="panel${j===0?' on':''}" role="tabpanel" id="${m.id}-p${j}" aria-labelledby="${m.id}-t${j}" tabindex="0">${p.h}</div>`).join('\n  ')}
+  ${panels.map((p,j)=>`<div class="panel${j===0?' on':''}" data-label="${p.t}" role="tabpanel" id="${m.id}-p${j}" aria-labelledby="${m.id}-t${j}" tabindex="0">${p.h}</div>`).join('\n  ')}
   <div class="mod-foot"><button class="done-btn" data-done="${m.id}" aria-pressed="false">${svg('check','sm')}<span>Tandakan selesai dibaca</span></button><nav class="pager" aria-label="Navigasi modul"><a class="prev" href="#${prev.id}"><small>${svg('left','sm')}Sebelum</small><span>${prev.t}</span></a><a class="next" href="#${next.id}"><small>Seterusnya${svg('right','sm')}</small><span>${next.t}</span></a></nav></div>
 </section>`}).join('');
 Object.values(EXPLAIN).forEach(x=>{try{x.init()}catch(e){console.error('explain',e)}});

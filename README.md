@@ -1,8 +1,16 @@
 # Panduan Analisis SPPM
 
-Panduan interaktif untuk membaca analisis Dashboard SPPM secara kritikal. Satu fail HTML (`index.html`) dan folder `img/` (12 tangkapan skrin Dashboard): tiada build, tiada pangkalan data.
+Panduan interaktif untuk membaca analisis Dashboard SPPM secara kritikal. Satu fail HTML (`index.html`), folder `img/` (12 tangkapan skrin Dashboard) dan folder `demo/` (Dashboard SPPM yang berjalan dalam pelayar dengan data rekaan): tiada build, tiada pangkalan data.
 
 Semua contoh angka dan tangkapan skrin datang daripada data rekaan (sekolah, nama dan markah). Tiada data murid atau sekolah sebenar dalam repositori ini.
+
+## Demo
+
+`demo/` ialah Dashboard SPPM sebenar yang dijalankan dalam pelayar menggunakan emulator Google Apps Script (`gas-mock.js`) dan data rekaan (112 murid, SMK Demo Bestari). Perubahan yang dibuat dalam demo disimpan dalam pelayar pengguna sahaja; butang **Reset** memulihkan data asal.
+
+## Cetak
+
+Gunakan Cetak (Ctrl+P) dalam pelayar. Gaya cetak disediakan untuk kertas A4: setiap modul bermula di halaman baharu, dan penerangan penanda dicetak sebagai senarai bernombor di bawah setiap gambar.
 
 ## Deploy ke GitHub Pages
 
