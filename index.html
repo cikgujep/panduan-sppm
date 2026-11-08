@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panduan Analisis SPPM</title>
+<meta name="description" content="Panduan interaktif membaca analisis Dashboard SPPM secara kritikal untuk pentadbir dan guru.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7fb;--surface:#ffffff;--surface-2:#f1f3f9;--ink:#0f172a;--ink-2:#334155;--muted:#64748b;--line:#e2e8f0;
+  --brand:#4f46e5;--brand-ink:#ffffff;--brand-soft:#eef2ff;
+  --good:#059669;--good-soft:#ecfdf5;--bad:#dc2626;--bad-soft:#fef2f2;--warn:#d97706;--warn-soft:#fffbeb;
+  --shadow:0 1px 2px rgba(15,23,42,.05),0 8px 24px rgba(15,23,42,.06);--radius:16px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1020;--surface:#121a2e;--surface-2:#18223a;--ink:#e8ecf6;--ink-2:#c3cbe0;--muted:#8b97b3;--line:#253150;
+  --brand:#818cf8;--brand-ink:#0b1020;--brand-soft:#1e2550;
+  --good:#34d399;--good-soft:#0e2a22;--bad:#f87171;--bad-soft:#2d1416;--warn:#fbbf24;--warn-soft:#2b220d;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);}}
+:root[data-theme="dark"]{
+  --bg:#0b1020;--surface:#121a2e;--surface-2:#18223a;--ink:#e8ecf6;--ink-2:#c3cbe0;--muted:#8b97b3;--line:#253150;
+  --brand:#818cf8;--brand-ink:#0b1020;--brand-soft:#1e2550;
+  --good:#34d399;--good-soft:#0e2a22;--bad:#f87171;--bad-soft:#2d1416;--warn:#fbbf24;--warn-soft:#2b220d;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--brand)}
+h1,h2,h3{line-height:1.2;margin:0}
+p{margin:.5em 0}
+button,input,select{font:inherit;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;text-decoration:none;color:var(--ink);white-space:nowrap}
+.logo span.dot{width:30px;height:30px;border-radius:9px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-size:14px}
+.progress{flex:1;height:6px;background:var(--line);border-radius:99px;overflow:hidden;min-width:40px}
+.progress i{display:block;height:100%;width:0;background:var(--brand);transition:width .3s}
+.pcount{font-size:13px;color:var(--muted);white-space:nowrap}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;height:36px;min-width:36px;padding:0 10px;cursor:pointer}
+.menu-btn{display:none}
+/* layout */
+.layout{display:grid;grid-template-columns:250px 1fr;gap:28px;padding-top:24px;padding-bottom:80px}
+nav.side{position:sticky;top:84px;align-self:start;max-height:calc(100vh - 100px);overflow:auto}
+nav.side input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:10px}
+nav.side .grp{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 8px 6px}
+nav.side a{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;color:var(--ink-2);text-decoration:none;font-size:14px;font-weight:500}
+nav.side a:hover{background:var(--surface-2)}
+nav.side a.active{background:var(--brand-soft);color:var(--brand);font-weight:700}
+nav.side a .tick{margin-left:auto;font-size:12px;color:var(--good);visibility:hidden}
+nav.side a.done .tick{visibility:visible}
+main{min-width:0}
+/* hero */
+.hero{background:linear-gradient(135deg,var(--brand),color-mix(in srgb,var(--brand) 55%,#0ea5e9));color:#fff;border-radius:22px;padding:34px 30px;box-shadow:var(--shadow)}
+.hero h1{font-size:clamp(26px,4vw,40px);font-weight:800;letter-spacing:-.02em}
+.hero p{max-width:640px;opacity:.95;font-size:17px}
+.hero .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.hero .chips span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);padding:5px 12px;border-radius:99px;font-size:13px;font-weight:600}
+/* cards */
+section.mod{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px;margin-top:22px}
+.mod-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.mod-num{width:40px;height:40px;border-radius:12px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:800;flex:none}
+.mod-head h2{font-size:23px;font-weight:800;letter-spacing:-.01em}
+.mod-head .q{color:var(--muted);font-size:15px;margin-top:2px}
+.where{font-size:12px;font-weight:700;color:var(--muted);background:var(--surface-2);border-radius:99px;padding:3px 10px;margin-left:auto;white-space:nowrap}
+.tabs{display:flex;gap:6px;margin:18px 0 14px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs button{border:0;background:none;padding:9px 12px;font-weight:700;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--brand);border-color:var(--brand)}
+.panel{display:none}.panel.on{display:block;animation:fade .2s}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start}
+.steps li::before{content:counter(s);width:28px;height:28px;border-radius:50%;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-weight:800;font-size:13px}
+.warn-list{display:grid;gap:10px}
+.warn-item{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:12px;padding:12px 14px;background:var(--warn-soft)}
+.warn-item b{display:block;margin-bottom:2px}
+.ask{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--brand-soft);font-size:15px}
+.ask b{color:var(--brand)}
+.lead{font-size:17px;color:var(--ink-2)}
+.callout{padding:14px 16px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--line);margin:12px 0}
+.callout.bad{background:var(--bad-soft);border:1px solid color-mix(in srgb,var(--bad) 30%,transparent)}
+.callout.good{background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 30%,transparent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+/* widgets */
+.lab{background:var(--surface-2);border-radius:14px;padding:18px;margin-top:6px}
+.lab h3{font-size:15px;margin-bottom:10px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.field input,.field select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;width:120px}
+input[type=range]{width:100%;accent-color:var(--brand)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.kpi strong{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi.bad strong{color:var(--bad)}.kpi.good strong{color:var(--good)}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:8px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--brand);color:var(--brand-ink)}
+.bar-row{display:grid;grid-template-columns:120px 1fr 56px;gap:10px;align-items:center;font-size:14px;margin:6px 0}
+.bar-track{height:22px;background:var(--surface);border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.bar-fill{height:100%;background:var(--brand);border-radius:6px;transition:width .5s}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700}
+.pill.good{background:var(--good-soft);color:var(--good)}.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.mid{background:var(--surface);color:var(--muted);border:1px solid var(--line)}
+/* GP scale */
+.scale{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin:10px 0 4px}
+.scale div{text-align:center;padding:10px 0;border-radius:8px;font-weight:800;font-size:14px;color:#fff}
+.scale small{display:block;font-size:11px;opacity:.9;font-weight:600}
+.scale-cap{display:flex;justify-content:space-between;font-size:13px;font-weight:700}
+/* matrix */
+.mx{border-collapse:separate;border-spacing:4px;width:auto;margin:auto}
+.mx td,.mx th{border:0;text-align:center;padding:0}
+.mx td button{width:56px;height:44px;border-radius:9px;border:1px solid var(--line);font-weight:800;cursor:pointer;background:var(--surface)}
+.mx td.up button{background:var(--good-soft);color:var(--good)}
+.mx td.down button{background:var(--bad-soft);color:var(--bad)}
+.mx td.stay button{background:var(--surface);color:var(--ink-2)}
+.mx td button.sel{outline:3px solid var(--brand)}
+/* quiz */
+.quiz .opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);padding:10px 14px;border-radius:12px;margin:8px 0;cursor:pointer;font-weight:500}
+.quiz .opt:hover{border-color:var(--brand)}
+.quiz .opt.right{border-color:var(--good);background:var(--good-soft)}
+.quiz .opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.quiz .exp{display:none;padding:12px 14px;border-radius:12px;background:var(--surface-2);margin-top:6px}
+.quiz.answered .exp{display:block}
+/* principles & myths */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.pcard .ic{font-size:22px}
+.pcard h3{font-size:16px;margin:6px 0 4px}
+.pcard p{font-size:14px;color:var(--ink-2);margin:0}
+.flip{perspective:900px;cursor:pointer;min-height:190px}
+.flip .in{position:relative;width:100%;height:100%;min-height:190px;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;padding:16px;border:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.flip .front{background:var(--bad-soft)}
+.flip .back{background:var(--good-soft);transform:rotateY(180deg)}
+.flip .tag{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.flip .front .tag{color:var(--bad)}.flip .back .tag{color:var(--good)}
+.flip .hint{margin-top:auto;font-size:12px;color:var(--muted)}
+/* checklist */
+.ck{display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.ck input{width:20px;height:20px;margin-top:3px;accent-color:var(--good);flex:none}
+.ck.on span{color:var(--muted);text-decoration:line-through}
+.ck-h{font-weight:800;margin:18px 0 4px;color:var(--brand)}
+.done-btn{margin-top:18px;border:1px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+.done-btn.on{background:var(--good);border-color:var(--good);color:#fff}
+.btn{border:0;background:var(--brand);color:var(--brand-ink);padding:9px 16px;border-radius:10px;font-weight:700;cursor:pointer}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+footer{color:var(--muted);font-size:13px;text-align:center;padding:30px 16px 50px}
+/* screenshots */
+.shot-wrap{margin:4px 0 18px}
+.shot-cap{font-size:13px;color:var(--muted);margin:0 0 8px;font-weight:600}
+.shot{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f8fafc;cursor:zoom-in}
+.shot img{display:block;width:100%;height:auto}
+.spot{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--brand);color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 8px rgba(15,23,42,.35);padding:0;z-index:2}
+.spot::before{content:none}
+.spot.on::before{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid #f59e0b;opacity:.6;animation:pulse 2s infinite}
+.spot.on{background:#f59e0b;transform:translate(-50%,-50%) scale(1.18)}
+.spot.on::before{border-color:#f59e0b}
+@keyframes pulse{0%{transform:scale(.8);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+.tour{display:flex;align-items:flex-start;gap:12px;margin-top:10px;padding:12px 14px;border-radius:12px;background:var(--brand-soft);min-height:64px}
+.tour .num{width:28px;height:28px;border-radius:50%;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-weight:800;flex:none}
+.tour .txt{flex:1;font-size:15px}
+.tour .txt b{display:block}
+.tour .nav{display:flex;gap:6px;flex:none}
+.tour .nav button{border:1px solid var(--line);background:var(--surface);border-radius:9px;width:34px;height:34px;cursor:pointer;font-weight:800}
+.tour .count{font-size:12px;color:var(--muted);font-weight:700;text-align:center;margin-top:4px}
+.lightbox{position:fixed;inset:0;z-index:50;background:rgba(2,6,23,.88);display:none;overflow:auto;padding:20px}
+.lightbox.on{display:block}
+.lightbox .shot{max-width:1240px;margin:30px auto;cursor:zoom-out}
+.lightbox .close{position:fixed;top:12px;right:16px;z-index:51;background:#fff;color:#0f172a;border:0;border-radius:10px;padding:8px 14px;font-weight:800;cursor:pointer}
+.lb-tip{max-width:1240px;margin:-18px auto 30px;color:#e2e8f0;font-size:15px;background:rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;display:none}
+.lb-tip.on{display:block}
+@media (max-width:600px){.spot{width:22px;height:22px;font-size:11px}.tour{flex-wrap:wrap}.tour .nav{margin-left:auto}}
+/* glossary tooltip */
+.term{border-bottom:1.5px dotted var(--brand);cursor:help;position:relative}
+.term:hover::after,.term:focus::after{content:attr(data-tip);position:absolute;left:0;top:130%;z-index:5;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.45;font-weight:500;padding:8px 10px;border-radius:9px;width:max-content;max-width:260px}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  nav.side{position:fixed;inset:60px 0 0 0;max-height:none;background:var(--bg);padding:16px;z-index:15;display:none}
+  nav.side.open{display:block}
+  .menu-btn{display:inline-block}
+  section.mod{padding:18px}
+  .where{margin-left:0}
+  .bar-row{grid-template-columns:90px 1fr 48px}
+}
+@media print{.top,nav.side,.tabs,.lab,.quiz,.done-btn{display:none!important}.panel{display:block!important}.layout{display:block}section.mod{box-shadow:none;break-inside:avoid}}
+
+/* ===== Penambahbaikan UI (ui-ux-pro-max) ===== */
+.ico{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:middle}
+.ico.sm{width:16px;height:16px}.ico.lg{width:24px;height:24px}
+/* Fokus papan kekunci yang jelas */
+:where(a,button,input,select,summary,[tabindex]):focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:8px}
+.skip{position:absolute;left:12px;top:-60px;z-index:60;background:var(--brand);color:var(--brand-ink);padding:10px 16px;border-radius:10px;font-weight:700;text-decoration:none;transition:top .15s}
+.skip:focus{top:10px}
+/* Sasaran sentuh minimum 44px */
+.iconbtn{min-width:44px;height:44px;display:inline-grid;place-items:center;padding:0}
+nav.side a{min-height:44px}
+nav.side input{min-height:44px}
+.tabs button{min-height:44px;display:inline-flex;align-items:center;gap:6px}
+.seg button{min-height:40px;padding:8px 14px}
+.tour .nav button{width:44px;height:44px;display:grid;place-items:center}
+.spot::after{content:"";position:absolute;inset:-9px;border-radius:50%}
+.quiz .opt{min-height:48px}
+.done-btn{min-height:44px;display:inline-flex;align-items:center;gap:8px}
+.btn{min-height:44px;display:inline-flex;align-items:center;gap:8px}
+.field input,.field select{min-height:44px}
+/* Ikon dalam kad prinsip dan nombor modul */
+.pcard .ic{width:44px;height:44px;border-radius:12px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
+.pcard .ic .ico{width:22px;height:22px}
+.mod-num .ico{width:20px;height:20px}
+.warn-item b{display:flex;align-items:center;gap:6px}
+.warn-item b .ico{color:var(--warn)}
+nav.side a .tick{display:inline-grid}
+/* Hero: carian dan laluan pantas (corak laman dokumentasi) */
+.hero-search{position:relative;margin-top:18px;max-width:560px}
+.hero-search .ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#64748b;pointer-events:none}
+.hero-search input{width:100%;min-height:52px;border:0;border-radius:14px;padding:0 16px 0 44px;font-size:16px;color:#0f172a;background:#fff;box-shadow:0 6px 20px rgba(15,23,42,.18)}
+.hero-search input:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.hs-results{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;z-index:12;display:none}
+.hs-results.on{display:block}
+.hs-results a{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 14px;color:var(--ink);text-decoration:none;font-weight:600;font-size:15px;border-bottom:1px solid var(--line)}
+.hs-results a:last-child{border-bottom:0}
+.hs-results a:hover,.hs-results a:focus-visible{background:var(--surface-2)}
+.hs-results small{margin-left:auto;color:var(--muted);font-weight:500}
+.paths{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
+.path{display:flex;gap:12px;align-items:flex-start;min-height:44px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow);transition:border-color .15s,transform .15s}
+.path:hover{border-color:var(--brand);transform:translateY(-1px)}
+.path .ic{width:40px;height:40px;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;flex:none}
+.path b{display:block;font-size:15px}
+.path span{font-size:13px;color:var(--muted)}
+/* Navigasi modul sebelum / seterusnya */
+.mod-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.pager{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.pager a{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink-2);text-decoration:none;font-weight:600;font-size:14px}
+.pager a:hover{border-color:var(--brand);color:var(--brand)}
+.done-btn{margin-top:0}
+/* Kembali ke atas */
+.to-top{position:fixed;right:16px;bottom:16px;z-index:14;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .2s}
+.to-top.on{opacity:1;pointer-events:auto}
+/* Lightbox: butang tutup lebih besar */
+.lightbox .close{min-height:44px;display:inline-flex;align-items:center;gap:6px}
+/* Pergerakan dikurangkan */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .spot.on::before{display:none}
+}
+@media (max-width:900px){.pager{margin-left:0;width:100%}.pager a{flex:1;justify-content:center}}
+
+/* ===== Pusingan 2: lebar ikut peranti, prinsip 6, kaki modul ringkas, mitos, popover, cara terangkan ===== */
+.wrap{max-width:min(1480px,100%)}
+@media (min-width:901px){.layout{grid-template-columns:260px minmax(0,1fr);gap:32px}}
+@media (min-width:1600px){.layout{grid-template-columns:280px minmax(0,1fr)}}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
+@media (max-width:1100px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.grid3{grid-template-columns:1fr}}
+.pcard{display:flex;flex-direction:column;gap:6px}
+.pcard h3{margin-top:4px}
+
+/* Kaki modul: kecil dan ringkas */
+.mod-foot{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:20px;padding-top:14px;border-top:1px dashed var(--line)}
+.done-btn{min-height:36px;padding:0 12px;border-radius:99px;font-size:13px;font-weight:600;color:var(--muted);background:transparent;border:1px solid var(--line)}
+.done-btn:hover{color:var(--good);border-color:var(--good)}
+.done-btn.on{background:var(--good-soft);color:var(--good);border-color:transparent}
+.pager{margin-left:auto;display:flex;gap:4px;flex-wrap:nowrap}
+.pager a{display:flex;flex-direction:column;justify-content:center;min-height:44px;padding:4px 12px;border:0;border-radius:10px;background:transparent;color:var(--ink-2);text-decoration:none;font-size:14px;font-weight:600;line-height:1.25;max-width:240px}
+.pager a small{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:2px}
+.pager a.next{text-align:right;align-items:flex-end}
+.pager a:hover{background:var(--surface-2);color:var(--brand)}
+.pager a span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media (max-width:900px){.pager{margin-left:0;width:100%;justify-content:space-between}.pager a{flex:0 1 auto}}
+
+/* Mitos vs Fakta: senarai akordion */
+.myth-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 8px}
+.myth-tools p{margin:0;color:var(--muted);font-size:14px}
+.myth-list{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.myth{border-bottom:1px solid var(--line)}
+.myth:last-child{border-bottom:0}
+.myth-q{width:100%;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;background:none;border:0;padding:14px 16px;min-height:56px;cursor:pointer;font:inherit;color:var(--ink)}
+.myth-q:hover{background:var(--surface-2)}
+.myth-q .tag,.myth-a .tag{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.myth-q .tag{background:var(--bad-soft);color:var(--bad)}
+.myth-q .txt{font-weight:600;font-size:15px}
+.myth-q .chev{color:var(--muted);transition:transform .2s}
+.myth.open .myth-q .chev{transform:rotate(90deg)}
+.myth-a{display:none;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:0 16px 16px 16px}
+.myth.open .myth-a{display:grid}
+.myth-a .tag{background:var(--good-soft);color:var(--good);margin-top:2px}
+.myth-a p{margin:0;font-size:15px;color:var(--ink-2)}
+.myth.open .myth-q .txt{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--bad) 60%,transparent);color:var(--muted)}
+
+/* Popover penanda: terus di sebelah nombor */
+.shot{overflow:visible}
+.shot img{border-radius:12px}
+.pop{position:absolute;z-index:6;width:min(300px,calc(100% - 16px));background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(2,6,23,.35);font-size:14px;line-height:1.5;pointer-events:auto}
+.pop b{display:block;font-size:14px;margin-bottom:2px}
+.pop .pin{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:8px;border:0;background:transparent;color:inherit;opacity:.7;cursor:pointer;display:grid;place-items:center}
+.pop .pin:hover{opacity:1;background:rgba(255,255,255,.12)}
+.pop[hidden]{display:none}
+.pop.narrow{width:auto}
+.shot-hint{font-weight:500}
+@media (hover:none){.shot-hint .hv{display:none}}
+
+/* Cara terangkan */
+.explain{display:grid;gap:16px}
+.ex-30{background:var(--brand-soft);border-radius:14px;padding:16px 18px}
+.ex-30 .lbl,.ex-box .lbl{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ex-30 p{margin:0;font-size:17px;font-weight:600;color:var(--ink)}
+.ex-box{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--surface)}
+.ex-box p{margin:.3em 0}
+.ex-viz{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--surface-2)}
+.ex-viz h3{font-size:15px;margin-bottom:10px}
+.ex-cap{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:15px;min-height:64px}
+.ex-cap b{display:block}
+.ex-script{border-left:4px solid var(--brand);background:var(--surface);border-radius:0 12px 12px 0;padding:12px 16px;font-size:15px}
+.ex-script q{font-style:italic}
+.chipbtns{display:flex;flex-wrap:wrap;gap:8px}
+.chipbtns button{min-height:40px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:14px;cursor:pointer;color:var(--ink-2)}
+.chipbtns button.on{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.nm-svg{width:100%;max-width:640px;height:auto;display:block;margin:12px auto 0}
+.nm-svg text{fill:var(--muted);font-size:11px;font-family:inherit}
+/* Pembaris G-Risk */
+.ruler{position:relative;height:150px;margin:12px 4px 34px}
+.ruler .band{position:absolute;bottom:0;height:100%;border-radius:8px;cursor:pointer;border:2px solid transparent;opacity:.9}
+.ruler .band:hover,.ruler .band.on{border-color:var(--ink)}
+.ruler .band span{position:absolute;top:6px;left:8px;font-size:12px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.ruler .qw{position:absolute;bottom:0;height:100%;background:repeating-linear-gradient(45deg,rgba(255,255,255,.35),rgba(255,255,255,.35) 5px,transparent 5px,transparent 10px);pointer-events:none;border-radius:0 8px 8px 0}
+.ruler .dot{position:absolute;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #0f172a;transform:translate(-50%,50%);pointer-events:none}
+.ruler .tick{position:absolute;bottom:-22px;font-size:11px;color:var(--muted);transform:translateX(-50%)}
+.ruler .pass{position:absolute;right:-4px;bottom:-22px;font-size:11px;font-weight:800;color:var(--good)}
+/* Aliran kohort G-Action */
+.flow{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;margin-top:8px}
+.flow .src{background:var(--surface);border:2px solid var(--brand);border-radius:12px;padding:10px 14px;text-align:center;min-width:120px}
+.flow .src strong{display:block;font-size:28px;line-height:1}
+.flow .src small{color:var(--muted);font-size:12px}
+.stack{display:flex;height:64px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.stack button{border:0;color:#fff;font-weight:800;font-size:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;min-width:0;padding:0 4px}
+.stack button small{font-size:11px;font-weight:600;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.stack button.on{box-shadow:inset 0 0 0 3px var(--ink)}
+.flow-new{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.flow-new button{min-height:40px;border-radius:12px;border:2px dashed #9333ea;background:color-mix(in srgb,#9333ea 10%,var(--surface));color:#7e22ce;font-weight:700;padding:0 14px;cursor:pointer}
+.flow-new button.on{border-style:solid}
+@media (max-width:600px){.tour{display:grid;grid-template-columns:auto 1fr;gap:10px}.tour > div:last-child{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;flex-direction:row-reverse}.tour .count{margin:0}.pager{flex-wrap:wrap}}
+@media (max-width:640px){.flow{grid-template-columns:1fr}.stack button small{display:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Langkau ke kandungan</a>
+<header class="top">
+  <div class="wrap">
+    <button class="iconbtn menu-btn" id="menuBtn" aria-label="Buka menu topik" aria-controls="side" aria-expanded="false"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <a class="logo" href="#mula"><span class="dot">S</span><span>Panduan SPPM</span></a>
+    <div class="progress" title="Kemajuan bacaan"><i id="progBar"></i></div>
+    <span class="pcount" id="progTxt">0/13</span>
+    <button class="iconbtn" id="themeBtn" aria-label="Tukar tema terang atau gelap"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></button>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="side" id="side" aria-label="Senarai topik">
+    <label class="sr-only" for="search" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Cari topik</label><input id="search" type="search" placeholder="Cari topik…">
+    <div id="navList"></div>
+  </nav>
+
+  <main id="main" tabindex="-1">
+    <div class="hero" id="mula">
+      <h1>Panduan Membaca Analisis SPPM</h1>
+      <p>Belajar membaca setiap paparan Dashboard SPPM secara kritikal: apa yang ditunjukkan, cara angka dikira, perangkap yang biasa berlaku, dan soalan yang patut ditanya dalam mesyuarat.</p>
+      <div class="hero-search" role="search"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><label for="heroSearch" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Cari dalam panduan</label><input id="heroSearch" type="search" placeholder="Cari: GP, bulatan, TH, G-Risk, SES…" autocomplete="off" aria-controls="hsResults"><div class="hs-results" id="hsResults" role="listbox"></div></div>
+      <div class="chips"><span>10 modul</span><span>12 tangkapan skrin</span><span>Kalkulator interaktif</span><span>Kuiz ringkas</span></div>
+    </div>
+    <div class="paths" aria-label="Laluan pantas">
+      <a class="path" href="#prinsip"><span class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg></span><div><b>Baru menggunakan SPPM?</b><span>Mula dengan 6 prinsip dan peraturan GP.</span></div></a>
+      <a class="path" href="#semak"><span class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span><div><b>Ada mesyuarat esok?</b><span>Terus ke senarai semak mesyuarat.</span></div></a>
+      <a class="path" href="#mitos"><span class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span><div><b>Ragu-ragu dengan angka?</b><span>Semak 7 mitos membaca data.</span></div></a>
+    </div>
+
+    <section class="mod" id="prinsip" data-title="Enam prinsip asas" data-grp="Mula di sini">
+      <div class="mod-head"><div class="mod-num"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div><div><h2>Enam prinsip membaca data</h2><div class="q">Pegang enam prinsip ini sebelum membuka mana-mana graf.</div></div></div>
+      <div class="grid3">
+        <div class="pcard"><div class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></div><h3>Bandingkan</h3><p>Angka seorang diri tidak bermakna. GP 3.51 perlu dibandingkan dengan target, peperiksaan lepas, atau kumpulan lain.</p></div>
+        <div class="pcard"><div class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h3>Tanya "berapa orang?"</h3><p>50% lulus dalam kelas 4 orang ialah 2 murid. Peratus kumpulan kecil mudah berayun.</p></div>
+        <div class="pcard"><div class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg></div><h3>Cari corak</h3><p>Satu peperiksaan jatuh mungkin soalan susah. Tiga berturut-turut jatuh ialah isu.</p></div>
+        <div class="pcard"><div class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div><h3>Simptom bukan punca</h3><p>Dashboard menunjukkan <i>di mana</i> masalah. Ia tidak menjelaskan <i>mengapa</i>. Sahkan dengan guru dan murid.</p></div>
+        <div class="pcard"><div class="ic"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div><h3>Berakhir dengan tindakan</h3><p>Jika tiada keputusan yang berubah selepas membaca sesuatu paparan, paparan itu belum dibaca sepenuhnya.</p></div>
+        <div class="pcard"><div class="ic"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></div><h3>Semak data dahulu</h3><p>TOV, ETR, SES atau kategori subjek yang salah isi akan merosakkan semua graf. Pastikan data lengkap sebelum membuat kesimpulan.</p></div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:14px">Semua contoh angka dalam panduan ini datang daripada data rekaan (112 murid, 4 kelas Tingkatan 5). Angka sekolah anda akan berbeza.</p>
+    </section>
+
+    <section class="mod" id="gp" data-title="Peraturan emas: GP" data-grp="Mula di sini">
+      <div class="mod-head"><div class="mod-num"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><div><h2>Peraturan emas: GP rendah = lebih baik</h2><div class="q">Punca salah faham paling kerap dalam mesyuarat.</div></div></div>
+      <p class="lead">GP ialah purata mata gred. A+ bernilai <b>0</b> dan G bernilai <b>9</b>. Jadi apabila GP <b>turun</b>, prestasi <b>naik</b>.</p>
+      <div class="scale" id="gpScale"></div>
+      <div class="scale-cap"><span style="color:var(--good)">← Terbaik (0)</span><span style="color:var(--bad)">Terburuk (9) →</span></div>
+      <div class="lab">
+        <h3>Cuba: gerakkan GP dan lihat maknanya</h3>
+        <input type="range" id="gpSlide" min="0" max="9" step="0.01" value="4.88">
+        <div class="kpis"><div class="kpi"><small>GP dipilih</small><strong id="gpVal">4.88</strong></div><div class="kpi"><small>Secara purata, murid berada sekitar gred</small><strong id="gpGrade">B / C+</strong></div></div>
+      </div>
+      <h3 style="margin-top:20px;font-size:16px">Istilah yang perlu tahu</h3>
+      <div class="tbl" style="margin-top:8px"><table>
+        <thead><tr><th>Istilah</th><th>Maksud</th><th>Ingat</th></tr></thead>
+        <tbody id="glossary"></tbody>
+      </table></div>
+    </section>
+
+    <div id="modules"></div>
+
+    <section class="mod" id="mitos" data-title="Mitos vs Fakta" data-grp="Rumusan">
+      <div class="mod-head"><div class="mod-num"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg></div><div><h2>Mitos vs Fakta</h2><div class="q">Baca setiap mitos, fikir dahulu, kemudian buka faktanya.</div></div></div>
+      <div class="myth-tools"><p>7 salah faham yang paling kerap dalam mesyuarat analisis.</p><button class="btn ghost" id="mythAll">Tunjuk semua fakta</button></div><div class="myth-list" id="myths"></div>
+      <h3 style="margin-top:22px;font-size:16px">Tiga semakan sebelum membentang apa-apa angka</h3>
+      <ol class="steps" style="margin-top:10px">
+        <li><div><b>Penapis:</b> tingkatan, kelas, subjek dan peperiksaan apa yang dipilih? Tulis pada slaid.</div></li>
+        <li><div><b>Saiz:</b> berapa murid di sebalik angka? Kurang daripada 20, berhati-hati dengan peratus.</div></li>
+        <li><div><b>Rujukan:</b> dibandingkan dengan apa? Target, peperiksaan lepas, atau kumpulan lain?</div></li>
+      </ol>
+      <div class="callout"><b>Kualiti data = kualiti analisis.</b> SPPM hanya menerima markah nombor 0–100 atau TH; nilai lain (cth "AB", "35abc", 150) ditolak semasa simpan dan import. TOV yang diisi sembarangan, ETR tanpa asas, SES atau VARK yang tidak lengkap, dan kategori subjek yang salah menghasilkan analisis yang kelihatan meyakinkan tetapi salah.</div>
+    </section>
+
+    <section class="mod" id="semak" data-title="Senarai semak mesyuarat" data-grp="Rumusan">
+      <div class="mod-head"><div class="mod-num"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></div><div><h2>Senarai semak mesyuarat analisis</h2><div class="q">Ikut urutan ini: dari gambaran besar ke murid individu, dan berakhir dengan tindakan.</div></div></div>
+      <div id="checklist"></div>
+      <div class="row" style="margin-top:16px"><button class="btn" onclick="window.print()"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg> Cetak panduan</button><button class="btn ghost" id="ckReset"><svg class="ico sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Kosongkan tanda</button></div>
+    </section>
+
+    <footer>Panduan Analisis SPPM · Dibina untuk pentadbir dan guru · Tanda semakan dan kemajuan bacaan disimpan dalam pelayar anda sahaja.</footer>
+  </main>
+</div>
+
+<script>
+/* ===================== DATA ===================== */
+const GLOSS=[
+ ["TOV","Take Off Value: markah permulaan murid","Titik mula semua perbandingan. TOV tidak tepat merosakkan semua analisis."],
+ ["AR1, AR2","Peperiksaan pertengahan (Analisis Ramalan)","Pencapaian sebenar murid."],
+ ["ETR","Expected Target Result: target akhir murid","Ditetapkan guru, bukan dikira sistem."],
+ ["OTR","Operational Target: target pertengahan","Dikira sistem secara garis lurus dari TOV ke ETR."],
+ ["GP / GPMP","Gred Purata (Mata Pelajaran)","0 = semua A+, 9 = semua G. Turun = baik."],
+ ["Status gred","Cemerlang, Kepujian, Baik, Lulus, Gagal","D dan E dikira lulus."],
+ ["TH","Tidak hadir","Diasingkan: bukan lulus, bukan gagal, tiada GP. Tetapi TH dalam subjek WAJIB = tidak layak sijil."],
+ ["SES","SESR = SES Rendah, SESSR = SES Selain Rendah","Murid tanpa label (belum diisi) tidak masuk analisis SES."],
+ ["VARK","Gaya belajar V, A, R, K","Label isian guru, bukan ujian piawai."],
+ ["Tier G","Pecahan murid G (markah 0–39)","Mod 3-tier atau 4-tier."]
+];
+const MYTHS=[
+ ["GP naik bermaksud prestasi naik.","GP turun = lebih baik. Hijau = baik."],
+ ["Lulus 82.9% bermaksud kebanyakan murid selamat.","Lulus termasuk D dan E. Dalam BM AR2, 21 murid di D/E dan 19 murid G."],
+ ["Bulatan pada kad GP sudah cukup untuk melapor kemajuan.","Bulatan (21%) hanya menunjukkan jarak TOV ke target yang sudah dilalui. Lapor juga GP yang masih perlu diturunkan (1.37) dan masa yang tinggal."],
+ ["Subjek dengan GP terbaik ialah subjek terbaik.","Bandingkan dengan target sendiri. PI terbaik tetapi maju 17%; EKO lemah tetapi maju 42%."],
+ ["Naratif automatik boleh dipetik terus.","Naratif dijana daripada kedudukan sahaja, tanpa konteks atau target."],
+ ["\"43% murid Kritikal ialah Kinestetik\", jadi Kinestetik masalah utama.","Kinestetik memang 36% daripada semua murid. Kadar Kritikal dalam kumpulan: 43% berbanding Visual 35%. Beza sederhana."],
+ ["\"On Track\" bermaksud murid akan lulus.","On Track hanya bermaksud naik 3+ markah. Murid dari 20 ke 23 masih perlu 17 markah lagi. Semak DPM semasa."]
+];
+const CHECK=[
+ ["1. Gambaran sekolah",["Berapa GP semasa berbanding GP ETR? Berapa jarak yang tinggal?","Berapa peratus jarak TOV ke ETR sudah dilalui? Cukupkah kadarnya?","Subjek mana paling perlahan bergerak ke target sendiri?"]],
+ ["2. Di mana masalahnya",["Kelas/subjek mana paling sedikit bergerak berbanding ruang untuk bergerak?","Adakah taburan markah menunjukkan dua kumpulan berbeza?","Berapa murid D dan E berisiko jatuh ke G?"]],
+ ["3. Siapa yang terlibat",["Siapa murid Quick Win (35–39) bagi setiap subjek kritikal?","Siapa jatuh dua gred atau lebih dalam Matriks?","Adakah jurang jantina/SES kekal dalam kelas yang sama?"]],
+ ["4. Adakah intervensi berhasil",["Berapa murid G baseline sudah keluar dari G?","Siapa yang baru jatuh ke G, dan apa puncanya?"]],
+ ["5. Tindakan",["Setiap tindakan ada nama guru, senarai murid dan tarikh semakan.","Tetapkan angka untuk disemak mesyuarat seterusnya (cth: G Matematik 33 → 25).","Kenal pasti data yang perlu dibetulkan (TOV, ETR, SES, kategori subjek)."]]
+];
+
+/* Setiap modul: id, tajuk, lokasi menu, soalan, ringkas(html), langkah[], awas[[tajuk,isi]], soalan mesyuarat, lab(html), init(fn), kuiz{q,opts,ans,exp} */
+const MODS=[
+{id:"utama",title:"Analisis HC (Utama)",where:"Utama",grp:"Paparan Utama",q:"Adakah kita di landasan untuk mencapai target?",
+ sum:`<p class="lead">Jawapannya ada pada <b>jarak</b> antara GP semasa dengan GP ETR, dan <b>arah trend</b> merentas peperiksaan.</p>
+ <p>Paparan ini mengandungi empat kad (Jumlah Calon, Lulus, Gagal, GP Semasa berbanding Target), kad GP bagi setiap peperiksaan dengan anak panah, graf taburan gred, dan graf trend "Pencapaian Semasa" berbanding garis "Sasaran" (OTR).</p>
+ <div class="tbl"><table><thead><tr><th>Contoh: GP Bahasa Melayu</th><th class="n">TOV</th><th class="n">AR1</th><th class="n">AR2</th><th class="n">ETR</th></tr></thead><tbody><tr><td>GP</td><td class="n">5.25</td><td class="n">5.13</td><td class="n">4.88</td><td class="n">3.51</td></tr></tbody></table></div>`,
+ steps:["Pilih <b>satu subjek</b> dan <b>satu peperiksaan</b> dahulu supaya angka mewakili murid sebenar.","Bandingkan GP Semasa dengan Target (GP ETR). Kad bertanda \"Capai\" atau \"+jurang\".","Lihat anak panah pada kad setiap peperiksaan: <span class='pill good'>hijau</span> = GP turun = baik.","Buka graf taburan gred untuk melihat berapa murid di D dan E, bukan sekadar lulus."],
+ warn:[["Subjek = Semua: Lulus/Gagal ikut rekod","Jumlah Calon menunjukkan bilangan murid, tetapi Lulus/Gagal dikira ikut rekod markah (contoh: 704 rekod lulus daripada 891 rekod). Label bertukar kepada \"Rekod Lulus/Gagal\"."],["Bulatan = kemajuan dari TOV ke target","(GP TOV − GP semasa) ÷ (GP TOV − GP target). 0% = masih di TOV, 100% = capai target. Jangan kira dari GP 9 (terburuk): cara itu memberi peratus yang terlalu tinggi."],["Lulus termasuk D dan E","82.9% lulus boleh menyembunyikan ramai murid di sempadan."],["TH tidak dikira gagal","TH yang tinggi membuat peratus lulus nampak lebih baik."]],
+ ask:"Berapa GP lagi perlu diturunkan? Adakah kadar sekarang mencukupi? Subjek dan kelas mana menyumbang paling banyak kepada jurang?",
+ lab:`<h3>Kalkulator: kemajuan ke target</h3>
+ <div class="row"><label class="field">GP TOV<input id="u_t" type="number" step="0.01" value="5.25"></label><label class="field">GP semasa<input id="u_s" type="number" step="0.01" value="4.88"></label><label class="field">GP ETR (target)<input id="u_e" type="number" step="0.01" value="3.51"></label></div>
+ <div class="kpis" style="display:none"><strong id="u_c"></strong></div><div class="kpis"><div class="kpi good"><small>Bulatan Dashboard (dari TOV)</small><strong id="u_p">21%</strong></div><div class="kpi bad"><small>GP yang perlu diturunkan lagi</small><strong id="u_r">1.37</strong></div></div>
+ <div class="callout" id="u_note"></div>`,
+ init(){const f=()=>{const t=+u_t.value,s=+u_s.value,e=+u_e.value;const c=Math.max(0,Math.min(100,(9-s)/(9-e)*100));const p=t!==e?(t-s)/(t-e)*100:0;u_c.textContent=Math.round(c)+'%';u_p.textContent=Math.round(p)+'%';u_r.textContent=Math.max(0,s-e).toFixed(2);
+   u_note.innerHTML=`Bulatan Dashboard akan memaparkan <b>${Math.round(p)}%</b>: itu bahagian jarak TOV ke target yang sudah dilalui. GP perlu turun <b>${Math.max(0,s-e).toFixed(2)}</b> lagi untuk capai target.`};[u_t,u_s,u_e].forEach(i=>i.oninput=f);f()},
+ quiz:{q:"GP Matematik turun dari 6.48 (TOV) ke 6.05 (AR2). Apa maksudnya?",opts:["Prestasi merosot","Prestasi bertambah baik","Tiada perubahan bermakna"],ans:1,exp:"GP turun bermaksud purata gred naik. Murid secara purata bergerak ke arah gred lebih baik."}},
+
+{id:"matriks",title:"Matriks Pencapaian",where:"Diagnostik",grp:"Diagnostik",q:"Siapa yang bergerak naik, turun, atau kekal?",
+ sum:`<p class="lead">Matriks menunjukkan <b>pergerakan murid</b>, bukan purata. Dua kelas boleh ada GP sama tetapi corak pergerakan sangat berbeza.</p>
+ <p>Lajur ialah gred peperiksaan pertama. Baris ialah gred peperiksaan kedua. Klik nombor untuk melihat nama murid.</p>
+ <div class="callout good"><b>Petua:</b> Pilih OTR1/OTR2 sebagai peperiksaan kedua. AR1 berbanding OTR1 menjawab "adakah murid di tempat yang sepatutnya?", bukan sekadar "adakah murid bergerak?".</div>`,
+ steps:["Pilih subjek, kelas, dan dua peperiksaan berbeza.","Lihat ketebalan <b>garis pepenjuru</b>: ramai di situ bermaksud murid tidak bergerak.","Cari petak <span class='pill bad'>merah</span> yang jauh dari pepenjuru: murid jatuh dua gred atau lebih.","Klik petak untuk senarai nama, kemudian semak Profil Murid."],
+ warn:[["Gred sama ≠ markah sama","79 ke 70 kekal A- tetapi merosot 9 markah."],["Murid tanpa rekod dikecualikan","Jumlah dalam matriks mungkin kurang daripada enrolmen."],["TH ialah kategori berasingan","Perpindahan yang melibatkan TH (cth TH → G) dikira dalam kad \"TH / tidak setara\", bukan Meningkat atau Merosot, kerana perbandingannya tidak setara."],["Sempadan lulus sensitif","E ke G atau G ke E mengubah peratus lulus walaupun beza beberapa markah."]],
+ ask:"Siapa jatuh dua gred atau lebih, dan adakah guru kelas tahu sebabnya? Adakah murid di atas sempadan lulus cukup selamat?",
+ lab:`<h3>Cuba: klik mana-mana petak</h3><p style="font-size:14px;color:var(--muted)">Matriks ringkas: lajur = AR1, baris = AR2.</p><div class="tbl" style="border:0"><table class="mx" id="mx"></table></div><div class="callout" id="mxNote">Klik satu petak.</div>`,
+ init(){const G=['A','B','C','D','G'];const M=[[6,2,0,0,0],[3,9,3,0,0],[0,4,11,2,1],[0,0,3,6,3],[0,0,1,4,8]];let h='<tr><th></th>'+G.map(g=>`<th>${g}</th>`).join('')+'</tr>';
+   M.forEach((r,i)=>{h+=`<tr><th>${G[i]}</th>`+r.map((v,j)=>`<td class="${j>i?'up':j<i?'down':'stay'}"><button data-i="${i}" data-j="${j}">${v}</button></td>`).join('')+'</tr>'});mx.innerHTML=h;
+   mx.onclick=e=>{const b=e.target.closest('button');if(!b)return;mx.querySelectorAll('button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');const i=+b.dataset.i,j=+b.dataset.j,v=b.textContent;const d=j-i;
+   mxNote.innerHTML=d>0?`<b>${v} murid naik ${d} gred</b>: dari ${G[j]} (AR1) ke ${G[i]} (AR2). Kenal pasti apa yang berkesan untuk mereka.`:d<0?`<b>${v} murid turun ${-d} gred</b>: dari ${G[j]} ke ${G[i]}. ${-d>=2?'Amaran awal: biasanya isu individu (kehadiran, motivasi, keluarga).':'Pantau dalam peperiksaan seterusnya.'}`:`<b>${v} murid kekal ${G[i]}</b>. Jika pepenjuru tebal, PdP mungkin tidak menggerakkan murid.`}},
+ quiz:{q:"Petak merah jauh dari pepenjuru menunjukkan…",opts:["Murid naik banyak gred","Murid jatuh dua gred atau lebih","Murid tidak hadir"],ans:1,exp:"Petak di atas pepenjuru (merah) ialah murid yang turun. Semakin jauh, semakin banyak gred jatuh."}},
+
+{id:"normaliti",title:"Normaliti",where:"Diagnostik",grp:"Diagnostik",q:"Bagaimana bentuk taburan markah satu subjek?",
+ sum:`<p class="lead">Graf ini menunjukkan sama ada murid berkumpul di tengah, terbahagi kepada <b>dua kumpulan</b>, atau tertumpu di bawah.</p>
+ <p>Setiap peperiksaan ialah satu lengkung (markah dalam selang 10). Lengkung "Benchmark" dibina daripada purata dan sisihan piawai <b>semua</b> peperiksaan yang dipaparkan. Kad statistik dikira semula apabila anda sembunyikan peperiksaan pada legenda.</p>`,
+ steps:["Pilih satu subjek.","Baca kad statistik: purata dan sisihan piawai dikira <b>tanpa ETR</b> (target). Klik nama peperiksaan pada legenda untuk banding satu-satu.","Lihat sama ada ada <b>dua bonggol</b>: tanda dua kumpulan berbeza.","Bandingkan ekor kiri (murid lemah) antara peperiksaan: adakah ia ikut bergerak?"],
+ warn:[["ETR ialah target, bukan pencapaian","Dashboard mengecualikan ETR daripada Benchmark dan kad statistik. Jika ETR dicampur, purata akan naik (51.57 berbanding 48.78) walaupun tiada murid yang bertambah baik."],["\"Analisis Bentuk\" hanya ikut purata","≥65 = \"Condong Kiri\", ≤40 = \"Condong Kanan\". Ini bukan ukuran kepencongan sebenar."],["Sisihan piawai besar = jurang dalam kelas","Satu kaedah PdP mungkin tidak sesuai untuk semua."]],
+ ask:"Adakah seluruh lengkung bergerak ke kanan, atau hanya murid yang sudah baik? Adakah wujud dua kumpulan yang perlukan strategi berbeza?",
+ lab:`<h3>Cuba: pilih peperiksaan yang dipaparkan (Matematik)</h3><div class="row" id="nmBox"></div><div class="kpis"><div class="kpi"><small>Purata jika dicampur</small><strong id="nmM">–</strong></div><div class="kpi"><small>Label "Analisis Bentuk"</small><strong id="nmL" style="font-size:16px">–</strong></div></div><div class="callout" id="nmNote"></div>`,
+ init(){const D=[["TOV",112,47.9],["AR1",112,48.3],["AR2",110,50.1],["ETR",112,59.9]];nmBox.innerHTML=D.map((d,i)=>`<label class="ck" style="border:0;padding:4px 10px 4px 0"><input type="checkbox" data-i="${i}" checked><span>${d[0]} <small style="color:var(--muted)">(purata ${d[2]})</small></span></label>`).join('');
+   const f=()=>{let n=0,s=0,etr=false;nmBox.querySelectorAll('input').forEach(c=>{if(c.checked){const d=D[c.dataset.i];n+=d[1];s+=d[1]*d[2];if(d[0]==='ETR')etr=true}});if(!n){nmM.textContent='–';nmL.textContent='–';nmNote.textContent='Pilih sekurang-kurangnya satu.';return}const m=s/n;nmM.textContent=m.toFixed(1);nmL.textContent=m>=65?'Condong Kiri':m<=40?'Condong Kanan':'Normal / Sederhana';
+   nmNote.innerHTML=etr?'<b>ETR dicampur:</b> purata naik kerana target bukan pencapaian. Sebab itu Dashboard tidak mencampurkan ETR.':'Tanpa ETR: inilah purata pencapaian sebenar, sama seperti yang dipaparkan Dashboard.'};nmBox.onchange=f;f()},
+ quiz:{q:"Graf markah mempunyai dua bonggol yang jelas. Apa tindakan terbaik?",opts:["Laporkan purata keseluruhan","Tapis mengikut kelas atau aliran untuk melihat dua kumpulan itu","Abaikan, ia kebetulan"],ans:1,exp:"Dua bonggol bermaksud dua kumpulan berbeza (contohnya aliran sains dan sastera). Purata tunggal menyembunyikan kedua-duanya."}},
+
+{id:"gpmp",title:"Banding GPMP & Analisis Gred",where:"Diagnostik",grp:"Diagnostik",q:"Subjek mana paling jauh dari target, dan berapa murid di setiap gred?",
+ sum:`<p class="lead">GPMP menunjukkan <b>kedudukan</b> subjek. Analisis Gred menunjukkan <b>bilangan murid</b> di setiap gred. Baca bersama.</p>
+ <p>Pilihan <b>Simulasi</b> (+1 gred, +2 gred, +10 markah, +20 markah) menjawab soalan "bagaimana jika". Nombor bertukar merah apabila simulasi aktif.</p>
+ <div class="callout"><b>Kemajuan ke target</b> = (GP TOV − GP semasa) ÷ (GP TOV − GP ETR). Ia menunjukkan peratus jarak ke target yang sudah dilalui.</div>`,
+ steps:["Baca jadual GPMP: satu baris setiap subjek, satu lajur setiap peperiksaan.","Untuk setiap subjek, kira kemajuan ke target sendiri (lihat tab <b>Cuba sendiri</b>).","Buka Analisis Gred: berapa A+, berapa di D/E, berapa G?","Gunakan Simulasi untuk menguji sama ada target realistik."],
+ warn:[["Ranking GP ≠ ranking prestasi guru","Subjek berbeza kesukaran dan populasi."],["Kumpulan kecil berayun besar","Seorang murid boleh mengubah GP subjek elektif dengan ketara."],["Simulasi bukan ramalan","\"+1 gred\" menganggap semua murid naik satu gred. Gunakan untuk perancangan sahaja."],["GP sama, taburan berbeza","GP 5.0 boleh bermaksud semua C+, atau separuh A dan separuh G."]],
+ ask:"Subjek mana paling perlahan bergerak ke target walaupun GP-nya baik? Berapa murid D dan E boleh diselamatkan?",
+ lab:`<h3>Cuba: tukar cara menyusun</h3><div class="seg" id="gpSeg"><button class="on" data-k="gp">Susun ikut GP AR2</button><button data-k="pr">Susun ikut kemajuan</button></div><div id="gpBars" style="margin-top:14px"></div><div class="callout" id="gpNote"></div>`,
+ init(){const D=[["Ekonomi",6.82,6.02,4.93],["P. Perakaunan",6.88,6.15,4.75],["B. Melayu",5.25,4.88,3.51],["P. Islam",4.38,4.10,2.71],["P. Moral",5.08,4.88,3.19]].map(d=>({n:d[0],t:d[1],s:d[2],e:d[3],p:(d[1]-d[2])/(d[1]-d[3])*100}));
+   const f=k=>{const a=D.slice().sort((x,y)=>k==='gp'?x.s-y.s:y.p-x.p);gpBars.innerHTML=a.map((d,i)=>`<div class="bar-row"><span>${i+1}. ${d.n}</span><div class="bar-track"><div class="bar-fill" style="width:${k==='gp'?(9-d.s)/9*100:d.p}%;background:${k==='gp'?'var(--brand)':'var(--good)'}"></div></div><b class="n">${k==='gp'?d.s.toFixed(2):Math.round(d.p)+'%'}</b></div>`).join('');
+   gpNote.innerHTML=k==='gp'?'Ikut GP, <b>P. Islam</b> nampak terbaik dan <b>Ekonomi</b> antara terlemah.':'Ikut kemajuan, <b>Ekonomi</b> paling maju (42%) dan <b>P. Islam</b> hanya 17%. Ranking hampir terbalik.'};
+   gpSeg.onclick=e=>{const b=e.target.closest('button');if(!b)return;gpSeg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));f(b.dataset.k)};f('gp')},
+ quiz:{q:"Subjek A: GP 4.10, kemajuan 17%. Subjek B: GP 6.02, kemajuan 42%. Subjek mana perlukan perhatian lebih?",opts:["Subjek B kerana GP lebih teruk","Subjek A kerana paling perlahan bergerak ke targetnya","Kedua-duanya sama"],ans:1,exp:"Nilai subjek berbanding targetnya sendiri. Subjek A baik tetapi hampir tidak bergerak; Subjek B lemah tetapi maju pesat."}},
+
+{id:"grisk",title:"Analisis Risiko (G-Risk)",where:"Diagnostik",grp:"Diagnostik",q:"Murid G mana yang didahulukan?",
+ sum:`<p class="lead">G-Risk hanya melihat murid G (markah 0–39) dan memecahkan mereka mengikut <b>jarak ke lulus</b>.</p>
+ <div class="tbl"><table><thead><tr><th>Metrik</th><th>Kiraan</th><th>Bacaan</th></tr></thead><tbody>
+ <tr><td><b>DPM</b></td><td>40 − markah</td><td>Lebih kecil = lebih hampir lulus</td></tr>
+ <tr><td><b>Quick Win</b></td><td>DPM ≤ 5 (markah 35–39)</td><td>Sasaran paling cepat ditukar ke lulus</td></tr>
+ <tr><td><b>FDI</b></td><td>Bil. G1 ÷ bil. murid G</td><td><b>Tinggi = berita baik</b>: ramai hampir lulus</td></tr>
+ <tr><td><b>Kritikal</b></td><td>Murid tier terendah</td><td>Perlu sokongan asas, bukan latih tubi</td></tr></tbody></table></div>
+ <p style="margin-top:12px"><b>Contoh (Matematik AR2):</b> 33 murid G daripada 112 (29.5%), FDI 0.545, 11 Quick Win, 2 Kritikal. Kelas 5 DEDIKASI menyumbang 15 daripada 33.</p>`,
+ steps:["Pilih subjek dan peperiksaan.","Pilih mod 3-tier atau 4-tier.","Baca KPI: berapa G, berapa Quick Win, berapa Kritikal.","Lihat graf komposisi tier mengikut kelas: adakah satu kelas mendominasi?","Tanda murid dalam Senarai Keutamaan dan hantar ke G-Action."],
+ warn:[["Jangan baca nama metrik secara literal","\"Fail Density Index\" tinggi sebenarnya bermaksud ramai murid G hampir lulus."],["Quick Win bukan jaminan","Markah 37 dalam AR2 mungkin 25 dalam AR1. Semak trend murid."],["Murid TH tidak masuk mana-mana tier","Semak mereka secara berasingan."],["Satu kelas mendominasi = isu kelas","Tanya tentang guru, jadual, susunan kelas, bukan hanya murid."]],
+ ask:"Siapa murid Quick Win dan siapa guru yang bertanggungjawab minggu ini? Apa pelan berbeza untuk tier terendah?",
+ lab:`<h3>Cuba: gerakkan markah seorang murid</h3><div class="row"><div style="flex:1;min-width:220px"><input type="range" id="gr_m" min="0" max="100" value="36"></div><div class="seg" id="grSeg"><button class="on" data-k="3">3-tier</button><button data-k="4">4-tier</button></div></div>
+ <div class="kpis"><div class="kpi"><small>Markah</small><strong id="gr_v">36</strong></div><div class="kpi"><small>DPM</small><strong id="gr_d">4</strong></div><div class="kpi"><small>Tier</small><strong id="gr_t" style="font-size:18px">G1</strong></div><div class="kpi"><small>Quick Win?</small><strong id="gr_q" style="font-size:18px">Ya</strong></div></div>`,
+ init(){let mode=3;const T={3:[[31,39,'G1 · Hampir Lulus'],[16,30,'G2 · Lemah'],[0,15,'G3 · Kritikal']],4:[[31,39,'G1 · Hampir Lulus'],[21,30,'G2 · Pengukuhan'],[11,20,'G3 · Asas'],[0,10,'G4 · Kritikal']]};
+   const f=()=>{const m=+gr_m.value;gr_v.textContent=m;if(m>=40){gr_d.textContent='–';gr_t.textContent='Lulus (luar G-Risk)';gr_q.textContent='–';return}gr_d.textContent=40-m;gr_t.textContent=T[mode].find(t=>m>=t[0]&&m<=t[1])[2];gr_q.textContent=40-m<=5?'Ya':'Tidak'};
+   gr_m.oninput=f;grSeg.onclick=e=>{const b=e.target.closest('button');if(!b)return;mode=+b.dataset.k;grSeg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));f()};f()},
+ quiz:{q:"FDI = 0.55 (tahap \"tinggi\"). Apa maksudnya?",opts:["Risiko gagal sangat tinggi","Lebih separuh murid G berada dalam jarak 9 markah dari lulus","55% murid gagal"],ans:1,exp:"FDI ialah bahagian murid G yang berada dalam tier G1 (31–39). Nilai tinggi ialah berita baik: masalah boleh diselesaikan dengan intervensi bersasar."}},
+
+{id:"impak",title:"Analisis Impak",where:"Intervensi",grp:"Intervensi",q:"Kelas atau subjek mana yang menggerakkan GP keseluruhan?",
+ sum:`<p class="lead">Analisis Impak mengambil kira <b>saiz</b>. Kelas besar yang bertambah baik sedikit boleh menyumbang lebih daripada kelas kecil yang bertambah baik banyak.</p>
+ <div class="callout"><b>Jurang</b> = GP kedua − GP pertama (negatif = baik). <b>Pemberat</b> = bil. murid ÷ jumlah murid. <b>Sumbangan</b> = Jurang × Pemberat.</div>`,
+ steps:["Pilih subjek (Impak Kelas) atau kelas (Impak Subjek), dan dua peperiksaan.","Lihat lajur Jurang dan Sumbangan: negatif = membantu.","Bandingkan kedudukan dengan GP semasa setiap kelas.","Jangan petik naratif automatik tanpa konteks."],
+ warn:[["Kedudukan mengukur pergerakan, bukan tahap","Kelas terbaik selalunya bergerak paling sedikit kerana ruang untuk naik kecil."],["Kelas lemah yang naik banyak masih lemah","Pujian dan intervensi boleh berlaku serentak."],["Naratif dijana daripada kedudukan","\"Intervensi disarankan untuk kelas X\" tidak mengambil kira target."],["Tiada data baseline = tiada kedudukan","Kelas atau subjek tanpa markah dalam peperiksaan pertama ditanda \"–\" dan tidak diberi kedudukan. Jangan anggap kelas itu sebagai penyumbang terburuk."]],
+ ask:"Kelas mana bergerak paling sedikit berbanding ruangnya untuk bergerak? Apa yang dilakukan kelas penyumbang terbaik, dan boleh diulang?",
+ lab:`<h3>Cuba: Matematik TOV ke AR2 (ubah nilai untuk melihat kesannya)</h3><div class="tbl"><table><thead><tr><th>Kelas</th><th class="n">Bil.</th><th class="n">GP TOV</th><th class="n">GP AR2</th><th class="n">Sumbangan</th><th class="n">Kedudukan</th></tr></thead><tbody id="imBody"></tbody></table></div><div class="callout" id="imNote"></div>`,
+ init(){const D=[["5 AMANAH",28,4.18,4.21],["5 BESTARI",28,6.29,6.19],["5 CEMERLANG",28,7.46,6.61],["5 DEDIKASI",28,8.00,7.26]];
+   imBody.innerHTML=D.map((d,i)=>`<tr><td>${d[0]}</td><td class="n"><input data-i="${i}" data-c="1" type="number" value="${d[1]}" style="width:64px"></td><td class="n">${d[2].toFixed(2)}</td><td class="n"><input data-i="${i}" data-c="3" type="number" step="0.01" value="${d[3]}" style="width:74px"></td><td class="n" id="im_s${i}"></td><td class="n" id="im_r${i}"></td></tr>`).join('');
+   const f=()=>{imBody.querySelectorAll('input').forEach(x=>D[x.dataset.i][x.dataset.c]=+x.value);const tot=D.reduce((a,d)=>a+d[1],0);const s=D.map(d=>(d[3]-d[2])*d[1]/tot);const ord=s.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);ord.forEach(([v,i],r)=>{document.getElementById('im_s'+i).innerHTML=`<span class="pill ${v<=0?'good':'bad'}">${v>0?'+':''}${v.toFixed(3)}</span>`;document.getElementById('im_r'+i).textContent=r+1});
+   const last=ord[ord.length-1][1];imNote.innerHTML=`Kedudukan terakhir: <b>${D[last][0]}</b> (GP AR2 ${(+D[last][3]).toFixed(2)}). ${D[last][3]<5?'Kelas ini sudah baik. Kedudukan rendah mungkin kerana ruang untuk naik kecil, bukan kerana masalah.':'Kelas ini perlu disemak: GP masih tinggi dan tidak bergerak.'}`};imBody.oninput=f;f()},
+ quiz:{q:"Kelas terbaik sekolah berada di kedudukan terakhir dalam Analisis Impak. Bacaan yang paling wajar?",opts:["Kelas itu bermasalah dan perlu intervensi segera","Semak dahulu sama ada GP kelas itu sudah hampir dengan targetnya","Kedudukan tidak bermakna langsung"],ans:1,exp:"Kedudukan mengukur pergerakan. Kelas cemerlang selalunya bergerak sedikit kerana hampir dengan siling. Bandingkan dengan target sebelum membuat keputusan."}},
+
+{id:"jurang",title:"Analisis Jurang",where:"Intervensi",grp:"Intervensi",q:"Adakah jurang jantina dan SES mengecil?",
+ sum:`<p class="lead">Membandingkan GP <b>lelaki dengan perempuan</b>, dan <b>SESR (SES Rendah) dengan SESSR (SES Selain Rendah)</b>. Tahap: Kecil &lt; 0.20, Sederhana 0.20–0.49, Besar ≥ 0.50.</p>
+ <div class="tbl"><table><thead><tr><th>Contoh (semua subjek)</th><th class="n">Bil. murid</th><th class="n">GP TOV</th><th class="n">GP AR1</th><th class="n">GP AR2</th></tr></thead><tbody>
+ <tr><td>SESSR (Selain Rendah)</td><td class="n">72</td><td class="n">5.22</td><td class="n">5.03</td><td class="n">4.80</td></tr>
+ <tr><td>SESR (Rendah)</td><td class="n">40</td><td class="n">6.41</td><td class="n">6.21</td><td class="n">6.05</td></tr>
+ <tr><td><b>Jurang SES</b></td><td></td><td class="n">1.20</td><td class="n">1.18</td><td class="n"><b>1.25</b></td></tr>
+ <tr><td><b>Jurang jantina</b> (P lebih baik)</td><td></td><td class="n">0.63</td><td class="n">0.58</td><td class="n"><b>0.79</b></td></tr></tbody></table></div>
+ <div class="callout bad" style="margin-top:12px">Kedua-dua kumpulan SES bertambah baik, tetapi jurang mengecil sedikit dalam AR1 lalu <b>melebar</b> dalam AR2. Murid SES Rendah bergerak lebih perlahan. Ini isyarat untuk sokongan khusus, walaupun purata sekolah naik.</div>`,
+ steps:["Pilih subjek dan peperiksaan.","Baca jurang dan tahapnya, dan saiz sampel (cth: L59/P53).","Lihat trend: adakah jurang mengecil dari peperiksaan ke peperiksaan?","Tapis mengikut kelas untuk menyemak sama ada jurang kekal dalam kelas yang sama."],
+ warn:[["Label SES kosong bermaksud \"belum diisi\"","Murid tanpa label tidak dikira. Pastikan guru kelas melengkapkan SES untuk semua murid sebelum membuat kesimpulan."],["Jurang jantina boleh jadi kesan susunan kelas","Jika kelas sains lebih ramai perempuan, jurang jantina sebenarnya jurang aliran."],["Sampel kecil tidak stabil","Jika hanya 10–15 murid SESR, seorang dua murid boleh mengubah GP kumpulan. Perhatikan amaran sampel sistem."],["Kedua-dua kumpulan naik ≠ jurang mengecil","Bandingkan jurang antara peperiksaan, bukan hanya GP setiap kumpulan."]],
+ ask:"Adakah jurang jantina kekal dalam kelas yang sama? Apa sokongan khusus untuk murid SESR, dan adakah jurang mereka mengecil sejak TOV?",
+ lab:`<h3>Cuba: kalkulator jurang dan trendnya</h3><div class="row"><label class="field">GP SESSR (lepas)<input id="jg_a1" type="number" step="0.01" value="5.03"></label><label class="field">GP SESR (lepas)<input id="jg_b1" type="number" step="0.01" value="6.21"></label><label class="field">GP SESSR (kini)<input id="jg_a2" type="number" step="0.01" value="4.80"></label><label class="field">GP SESR (kini)<input id="jg_b2" type="number" step="0.01" value="6.05"></label><label class="field">Bil. SESR<input id="jg_n" type="number" value="40"></label></div>
+ <div class="kpis"><div class="kpi"><small>Jurang lepas</small><strong id="jg_g1">–</strong></div><div class="kpi"><small>Jurang kini</small><strong id="jg_g2">–</strong></div><div class="kpi"><small>Tahap</small><strong id="jg_l" style="font-size:18px">–</strong></div><div class="kpi"><small>Trend</small><strong id="jg_t" style="font-size:18px">–</strong></div></div><div class="callout" id="jgNote"></div>`,
+ init(){const f=()=>{const g1=Math.abs(jg_b1.value-jg_a1.value),g2=Math.abs(jg_b2.value-jg_a2.value),d=g2-g1;jg_g1.textContent=g1.toFixed(2);jg_g2.textContent=g2.toFixed(2);jg_l.innerHTML=g2<0.2?'<span class="pill good">Kecil</span>':g2<0.5?'<span class="pill warn">Sederhana</span>':'<span class="pill bad">Besar</span>';
+   jg_t.innerHTML=Math.abs(d)<0.005?'<span class="pill mid">Kekal</span>':d<0?'<span class="pill good">Mengecil</span>':'<span class="pill bad">Melebar</span>';const n=+jg_n.value;
+   jgNote.innerHTML=(d>0?`Jurang melebar ${d.toFixed(2)}: murid SESR bergerak lebih perlahan daripada SESSR.`:d<0?`Jurang mengecil ${(-d).toFixed(2)}: sokongan untuk murid SESR mungkin berkesan.`:'Jurang tidak berubah.')+(n<20?` <b>Sampel kecil (${n} murid)</b>: tafsir dengan berhati-hati.`:'')};
+   ['jg_a1','jg_b1','jg_a2','jg_b2','jg_n'].forEach(i=>document.getElementById(i).oninput=f);f()},
+ quiz:{q:"Jurang jantina = 0.79 memihak perempuan. Langkah seterusnya?",opts:["Terus rancang program khas untuk murid lelaki","Semak sama ada jurang kekal dalam setiap kelas","Abaikan kerana jurang kecil"],ans:1,exp:"Jurang keseluruhan boleh datang daripada susunan kelas (contohnya kelas sains lebih ramai perempuan). Semak dalam kelas yang sama dahulu."}},
+
+{id:"vark",title:"Gaya Belajar (VARK)",where:"Intervensi",grp:"Intervensi",q:"Adakah gaya belajar berkait dengan pencapaian?",
+ sum:`<p class="lead">Gunakan VARK untuk <b>merancang variasi PdP</b>, bukan untuk menjelaskan mengapa murid lemah.</p>
+ <p>Paparan dibuka <b>satu subjek pada satu masa</b>. Ia menunjukkan GP setiap gaya belajar, carta murid Kritikal (D–G) mengikut gaya, dan ayat "Dapatan" serta "Fokus Intervensi" yang dijana automatik.</p>
+ <div class="tbl"><table><thead><tr><th>Contoh: BM, AR2</th><th class="n">Bil. murid</th><th class="n">GP</th><th class="n">Bil. Kritikal</th><th class="n">% Kritikal dalam kumpulan</th></tr></thead><tbody>
+ <tr><td>Auditori</td><td class="n">16</td><td class="n">4.25</td><td class="n">4</td><td class="n">25%</td></tr>
+ <tr><td>Visual</td><td class="n">37</td><td class="n">4.95</td><td class="n">13</td><td class="n">35%</td></tr>
+ <tr><td>Read/Write</td><td class="n">18</td><td class="n">5.00</td><td class="n">6</td><td class="n">33%</td></tr>
+ <tr><td>Kinestetik</td><td class="n">40</td><td class="n">5.03</td><td class="n">17</td><td class="n">43%</td></tr></tbody></table></div>`,
+ steps:["Pilih satu subjek dan peperiksaan, kemudian ulang untuk beberapa subjek lain.","Bandingkan beza GP antara gaya. Kurang daripada 0.20? Tiada dapatan.","Semak <b>bilangan murid</b> setiap gaya sebelum mempercayai \"terbaik\" atau \"terburuk\".","Untuk \"% Kritikal\", bandingkan dengan peratus kumpulan itu dalam semua murid (kadar asas).","Gunakan dapatan untuk memastikan setiap kelas menerima pelbagai bentuk input."],
+ warn:[["Kumpulan besar selalu \"mendominasi\"","43% murid Kritikal ialah Kinestetik, tetapi Kinestetik juga 36% daripada semua murid. Bandingkan dengan kadar asas."],["\"Terbaik\" daripada kumpulan kecil","Auditori GP 4.25 tetapi hanya 16 murid. Seorang dua murid boleh mengubah kedudukan."],["Paksi graf GP terbalik","0 di kanan, 9 di kiri. Bar bermula dari 0 dan memanjang ke kiri, jadi bar lebih panjang = GP lebih tinggi = lebih teruk. Bar paling pendek ialah yang terbaik."],["VARK ialah label isian guru","Kajian tidak menyokong idea bahawa mengajar ikut gaya belajar meningkatkan pencapaian."]],
+ ask:"Adakah corak yang sama muncul dalam beberapa subjek? Jika ya, adakah ia kekal dalam kelas yang sama?",
+ lab:`<h3>Cuba: "dominasi" vs kadar asas</h3><div class="seg" id="vkSeg"><button class="on" data-k="share">% daripada murid Kritikal</button><button data-k="rate">% Kritikal dalam setiap kumpulan</button></div><div id="vkBars" style="margin-top:14px"></div><div class="callout" id="vkNote"></div>`,
+ init(){const D=[["Visual",37,13],["Auditori",16,4],["Read/Write",18,6],["Kinestetik",40,17]];const T=D.reduce((a,d)=>a+d[2],0);const f=k=>{vkBars.innerHTML=D.map(d=>{const v=k==='share'?d[2]/T*100:d[2]/d[1]*100;return `<div class="bar-row"><span>${d[0]} <small style="color:var(--muted)">(${d[1]})</small></span><div class="bar-track"><div class="bar-fill" style="width:${v}%;background:${d[0]==='Kinestetik'?'var(--bad)':'var(--brand)'}"></div></div><b class="n">${Math.round(v)}%</b></div>`}).join('');
+   vkNote.innerHTML=k==='share'?'Kinestetik nampak <b>mendominasi</b> (43% murid Kritikal). Inilah yang ditulis sistem.':'Dalam setiap kumpulan, kadar Kritikal ialah 25%–43%. Kinestetik lebih tinggi, tetapi bukan sejauh "dominasi". Sebahagian besar sebabnya kumpulan ini paling ramai.'};vkSeg.onclick=e=>{const b=e.target.closest('button');if(!b)return;vkSeg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));f(b.dataset.k)};f('share')},
+ quiz:{q:"Sistem menulis \"43% daripada murid Kritikal adalah Kinestetik\". Soalan pertama yang patut ditanya?",opts:["Bagaimana mengasingkan murid Kinestetik?","Berapa peratus murid Kinestetik dalam semua murid?","Adakah guru perlu mengajar secara kinestetik sahaja?"],ans:1,exp:"Jika Kinestetik memang 36% daripada semua murid, 43% hanya sedikit lebih tinggi daripada jangkaan. Sentiasa bandingkan dengan kadar asas."}},
+
+{id:"gaction",title:"Tindakan Berperingkat (G-Action)",where:"Intervensi",grp:"Intervensi",q:"Adakah intervensi untuk murid G berhasil?",
+ sum:`<p class="lead">G-Action menjejak satu <b>kohort</b>: semua murid yang G (0–39) dalam peperiksaan <b>baseline</b>. Ia menunjukkan berapa yang sudah lulus, berapa yang bergerak, dan berapa yang masih tersekat.</p>
+ <div class="tbl"><table><thead><tr><th>Status</th><th>Maksud</th></tr></thead><tbody>
+ <tr><td><span class="pill good">Lulus</span></td><td>Ahli kohort yang kini 40 ke atas. Ukuran utama kejayaan.</td></tr>
+ <tr><td><span class="pill good">On Track</span></td><td>Masih G tetapi naik sekurang-kurangnya +3 markah.</td></tr>
+ <tr><td><span class="pill mid">Statik</span></td><td>Masih G dan berubah kurang daripada 3 markah.</td></tr>
+ <tr><td><span class="pill warn">At Risk</span> / <span class="pill bad">Kritikal</span></td><td>Turun 3 markah atau lebih, atau tidak bergerak di tier terendah.</td></tr>
+ <tr><td><span class="pill bad">Baru G</span></td><td>Lulus dalam baseline tetapi G sekarang. Senarai berasingan.</td></tr></tbody></table></div>
+ <p style="margin-top:12px"><b>Contoh (Matematik, TOV → AR2):</b> kohort 36 murid. 10 (27.8%) sudah lulus, 9 On Track, 7 Statik, 8 At Risk, 2 Kritikal. Purata Δ markah kohort +3.50. 7 murid baru jatuh ke G.</p>`,
+ steps:["Pilih subjek, peperiksaan <b>Baseline</b> (biasanya TOV) dan <b>Semasa</b>.","Baca <b>Keluar G (Lulus)</b> dan <b>% Lulus + On Track</b>: inilah ukuran kejayaan.","Lihat graf Pergerakan Tier: bar hijau \"Lulus\" ialah murid yang keluar dari G.","Tandakan \"Perlu tindakan sahaja\" untuk senarai Statik, At Risk, Kritikal dan Baru G.","Siasat murid <b>Baru G</b> secara berasingan: apa yang berubah untuk mereka?","Eksport CSV dan tetapkan guru serta tarikh semakan."],
+ warn:[["Statik bukan berita baik","Murid yang tidak bergerak (kurang 3 markah) memerlukan pendekatan berbeza, bukan kelas tambahan yang sama."],["On Track belum tentu cukup laju","Naik 3 markah dari 20 masih jauh dari 40. Semak DPM semasa dan masa yang tinggal."],["Murid TH dikecualikan","Murid yang TH dalam baseline atau semasa tidak masuk kohort. Semak mereka secara berasingan."],["Cadangan program ialah templat","Sasaran markah dan kekerapan sesi adalah tetap. Sesuaikan dengan kapasiti guru dan jadual."],["Jangan nilai hanya murid yang masih G","Jika hanya murid yang masih G dikira, murid yang berjaya lulus hilang daripada kiraan dan intervensi nampak gagal. Sentiasa baca Keluar G (Lulus)."]],
+ ask:"Berapa peratus kohort G sudah lulus? Siapa yang Statik, dan mengapa intervensi tidak menggerakkan mereka? Siapa yang baru jatuh ke G?",
+ lab:`<h3>Cuba: status seorang murid</h3><div class="row"><label class="field">Markah baseline<input id="ga_b" type="number" value="32"></label><label class="field">Markah semasa<input id="ga_c" type="number" value="34"></label></div>
+ <div class="kpis"><div class="kpi"><small>Δ markah</small><strong id="ga_d">+2</strong></div><div class="kpi"><small>Status</small><strong id="ga_s" style="font-size:18px">–</strong></div></div><div class="callout" id="gaNote"></div>
+ <h3 style="margin-top:16px">Mengapa kohort ikut baseline? Bandingkan dua cara mengira</h3><div class="seg" id="gaSeg"><button class="on" data-k="old">Kira murid yang masih G sahaja</button><button data-k="new">Kira kohort baseline</button></div><div id="gaBox" style="margin-top:14px"></div>`,
+ init(){const f=()=>{const b=+ga_b.value,c=+ga_c.value,d=c-b;ga_d.textContent=(d>0?'+':'')+d;let s,t,n;
+   if(b>39&&c>39){s='Bukan kohort';t='mid';n='Murid ini lulus dalam kedua-dua peperiksaan, jadi tidak dijejak G-Action.'}
+   else if(b>39){s='Baru G';t='bad';n='Lulus dalam baseline tetapi G sekarang. Siasat punca penurunan.'}
+   else if(c>39){s='Lulus';t='good';n='Keluar dari band G. Inilah kejayaan yang dicari.'}
+   else if(d>=3){s='On Track';t='good';n='Naik '+d+' markah. Masih perlu '+(40-c)+' markah lagi untuk lulus.'}
+   else if(c<=15){s='Kritikal';t='bad';n='Tier terendah dan tidak bergerak. Perlukan sokongan asas.'}
+   else if(d<=-3){s='At Risk';t='warn';n='Turun '+(-d)+' markah. Perlukan perhatian segera.'}
+   else{s='Statik';t='mid';n='Berubah kurang 3 markah. Intervensi belum menggerakkan murid ini.'}
+   ga_s.innerHTML='<span class="pill '+t+'">'+s+'</span>';gaNote.textContent=n};[ga_b,ga_c].forEach(i=>i.oninput=f);f();
+  const g=k=>{gaBox.innerHTML=k==='old'?`<div class="kpis"><div class="kpi"><small>Sasaran</small><strong>33</strong></div><div class="kpi bad"><small>% On Track</small><strong>33.3%</strong></div><div class="kpi bad"><small>Naik gred</small><strong>0</strong></div><div class="kpi bad"><small>Purata Δ markah</small><strong>−2.61</strong></div></div><div class="callout bad">Murid yang berjaya lulus hilang daripada senarai, dan murid yang baru jatuh dicampur masuk. Intervensi nampak gagal.</div>`
+   :`<div class="kpis"><div class="kpi"><small>Kohort G (TOV)</small><strong>36</strong></div><div class="kpi good"><small>Keluar G (Lulus)</small><strong>10</strong></div><div class="kpi good"><small>% Lulus + On Track</small><strong>52.8%</strong></div><div class="kpi good"><small>Purata Δ markah</small><strong>+3.50</strong></div></div><div class="callout good">Kohort yang sama dibandingkan sebelum dan selepas. 7 murid Baru G disenaraikan berasingan.</div>`};gaSeg.onclick=e=>{const b=e.target.closest('button');if(!b)return;gaSeg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));g(b.dataset.k)};g('old')},
+ quiz:{q:"Murid A: TOV 30, AR2 31. Murid B: TOV 45, AR2 38. Apakah status mereka dalam G-Action?",opts:["A On Track, B At Risk","A Statik, B Baru G","A Lulus, B Kritikal"],ans:1,exp:"A masih G dan naik hanya 1 markah (kurang 3), jadi Statik. B lulus dalam TOV tetapi G dalam AR2, jadi Baru G dan disenaraikan berasingan."}},
+
+{id:"individu",title:"Rumusan, Senarai & Profil Murid",where:"Data & Laporan",grp:"Data & Laporan",q:"Siapa murid di sebalik angka?",
+ sum:`<p class="lead">Turun ke tahap <b>murid individu</b> selepas paparan lain menunjukkan di mana masalahnya.</p>
+ <p><b>Rumusan Keseluruhan:</b> gred semua subjek, bilangan A dan GP individu, dengan penapis subjek gagal, minimum A, dan status sijil. Kad: Semua A+, Semua A, Near Miss, LMS.<br><b>Senarai Terperinci:</b> senarai penuh untuk semakan dan cetakan.<br><b>Profil Murid:</b> graf trend setiap subjek bagi seorang murid.</p>`,
+ steps:["Tapis \"1 subjek gagal\" dan lihat subjek mana paling kerap.","Semak murid Near Miss dan subjek yang menghalang mereka.","Buka Profil Murid sebelum memanggil murid atau ibu bapa."],
+ warn:[["Kad LMS dan penapis \"Layak\" guna peraturan berbeza","LMS hanya semak BM dan Sejarah. \"Layak\" menyingkirkan murid yang gagal mana-mana subjek berkategori WAJIB."],["GP individu memberi berat sama kepada semua subjek","Bandingkan murid dalam aliran yang sama."],["Satu peperiksaan buruk bukan corak","Semak trend dalam Profil Murid sebelum melabel."],["TH tidak dikira gagal","Murid TH dalam satu subjek tetap boleh muncul dalam \"0 subjek gagal\". Tetapi jika subjek itu WAJIB, murid tidak layak sijil."]],
+ ask:"Siapa murid Near Miss, dan subjek apa yang menghalang mereka? Berapa murid hanya gagal satu subjek, dan subjek apa paling kerap?",
+ lab:`<h3>Cuba: LMS vs penapis "Layak"</h3><p style="font-size:14px;color:var(--muted)">Tandakan subjek yang murid ini gagal. Anggap tetapan WAJIB = BM, Sejarah, Matematik.</p><div class="row" id="lmBox"></div><div class="kpis"><div class="kpi"><small>Kad LMS (BM + SEJ)</small><strong id="lm1" style="font-size:18px">–</strong></div><div class="kpi"><small>Penapis "Layak" (semua WAJIB)</small><strong id="lm2" style="font-size:18px">–</strong></div></div>`,
+ init(){const S=[["BM",1],["SEJ",1],["MT",1],["BI",0],["FIZ",0]];lmBox.innerHTML=S.map(s=>`<label class="ck" style="border:0;padding:4px 10px 4px 0"><input type="checkbox" value="${s[0]}"><span>${s[0]}${s[1]?' <small style="color:var(--muted)">(WAJIB)</small>':''}</span></label>`).join('');
+   const f=()=>{const g=[...lmBox.querySelectorAll('input:checked')].map(x=>x.value);const lms=!g.includes('BM')&&!g.includes('SEJ');const ly=!g.some(x=>S.find(s=>s[0]===x)[1]);lm1.innerHTML=lms?'<span class="pill good">Dikira</span>':'<span class="pill bad">Tidak</span>';lm2.innerHTML=ly?'<span class="pill good">Layak</span>':'<span class="pill bad">Tidak layak</span>'};lmBox.onchange=f;f()},
+ quiz:{q:"Murid Near Miss ialah…",opts:["Murid yang hampir lulus semua subjek","Murid yang mendapat A dalam semua subjek kecuali satu","Murid yang tidak hadir satu peperiksaan"],ans:1,exp:"Near Miss = semua A kecuali satu subjek. Ini senarai sasaran bernilai tinggi untuk bimbingan subjek tertentu."}}
+];
+
+/* ===================== TANGKAPAN SKRIN =====================
+   Setiap penanda: [x%, y%, tajuk, penerangan]. Gambar daripada demo data rekaan. */
+const SHOTS={
+utama:[{img:'img/utama.jpg',cap:'Paparan Utama · Bahasa Melayu · AR2',spots:[
+ [88.7,5.4,'Penapis','Tingkatan, kelas, subjek dan peperiksaan. Tulis penapis yang dipilih pada setiap slaid supaya angka tidak disalah tafsir.'],
+ [11.3,25.4,'Jumlah Calon = bilangan murid','111 murid mempunyai markah BM dalam AR2 (1 TH). Jika subjek = Semua, kad menambah nota "N rekod markah" dan label bertukar kepada "Rekod Lulus/Gagal".'],
+ [40.3,26.3,'Lulus termasuk D dan E','92 lulus (82.9%) termasuk murid gred D dan E yang berada di sempadan.'],
+ [88.7,21.4,'Bulatan = kemajuan dari TOV','21%: GP sudah bergerak 21% daripada jarak TOV (5.25) ke target (3.51). Masih ada 79% jarak lagi.'],
+ [25.8,45,'Kad setiap peperiksaan','Anak panah hijau bermaksud GP turun, iaitu prestasi naik berbanding peperiksaan sebelumnya.'],
+ [37.1,78.2,'Pencapaian vs Sasaran','Garis biru (sebenar) makin jauh dari garis merah putus-putus (OTR). Sekolah makin ketinggalan dari landasan target.'],
+ [85.5,68.5,'Taburan gred','19 murid G dan 21 murid D/E. Peratus lulus 82.9% menyembunyikan 40 murid yang berisiko.']]}],
+matriks:[{img:'img/matriks.jpg',cap:'Matriks Pencapaian · Matematik · TOV → AR2',spots:[
+ [82.3,5.8,'Mula dan Akhir','Pilih OTR1/OTR2 sebagai "Akhir" untuk menyemak sama ada murid berada di tempat sepatutnya, bukan sekadar bergerak.'],
+ [13.3,37.4,'Cara baca paksi','Lajur (melintang) = gred TOV. Baris (menegak) = gred AR2.'],
+ [20.6,23.8,'Warna zon','Hijau (kanan pepenjuru) = naik gred. Merah (kiri pepenjuru) = turun gred. Kelabu = kekal. Berjalur = melibatkan TH. Klik nombor dalam Dashboard untuk nama murid.'],
+ [5.6,87.1,'Baris G dan TH','26 murid kekal G dari TOV ke AR2: kumpulan yang intervensi belum sentuh. Baris dan lajur TH berjalur kerana perbandingannya tidak setara.'],
+ [88.7,60.5,'Ringkasan pergerakan','41 naik, 50 kekal, 19 merosot. Hampir separuh murid tidak bergerak gred langsung.'],
+ [92.7,86.6,'TH / tidak setara','2 murid tidak hadir dalam salah satu peperiksaan. Mereka tidak dikira Meningkat atau Merosot kerana perbandingannya tidak setara.']]}],
+normaliti:[{img:'img/normaliti.jpg',cap:'Taburan Normal · Matematik',spots:[
+ [26.6,30.1,'Legenda boleh diklik','Klik nama peperiksaan untuk sembunyi atau papar lengkungnya. Kad statistik dikira semula.'],
+ [37.9,39,'Puncak TOV di 40','Ramai murid berkumpul betul-betul di sempadan lulus. Sedikit gerakan boleh mengubah peratus lulus dengan besar.'],
+ [80.6,39,'Lengkung Benchmark','Taburan normal teori daripada pencapaian sebenar (tanpa ETR). Lengkung peperiksaan yang lari jauh dari bentuk ini perlu disiasat.'],
+ [29,90.9,'Purata tanpa ETR','48.78 ialah purata pencapaian sebenar. ETR ialah target, jadi tidak dicampur dalam purata ini.'],
+ [61.3,90.9,'Sisihan piawai','17.61: kebanyakan murid tersebar kira-kira 18 markah di atas dan bawah purata. Satu kaedah PdP mungkin tidak sesuai untuk semua.'],
+ [93.5,90.9,'Analisis Bentuk','Label ini hanya berdasarkan purata (40–65 = "Normal / Sederhana"), bukan bentuk graf sebenar.']]}],
+gpmp:[{img:'img/gpmp.jpg',cap:'Banding GPMP · semua subjek',spots:[
+ [56.5,4.9,'Simulasi','Pilih +1 gred, +10 markah dan lain-lain untuk menguji sama ada target realistik. Nombor bertukar merah.'],
+ [29.8,24.9,'Kad OTR','Target pertengahan yang dikira dari TOV ke ETR. Bandingkan AR1 dengan OTR1, AR2 dengan OTR2.'],
+ [16.1,46.6,'Klik nama subjek','Membuka graf trend subjek itu.'],
+ [83.9,42.2,'Anak panah dalam lajur','Hijau = GP turun (baik). Merah = GP naik (merosot). Contoh: Pendidikan Islam 4.06 → 4.10 merosot walaupun GP-nya antara yang terbaik.'],
+ [96,42.2,'Lajur ETR','Kira jarak AR2 ke ETR bagi setiap baris. Subjek dengan GP baik tidak semestinya paling hampir dengan targetnya.']]},
+ {img:'img/gred.jpg',cap:'Analisis Gred · Matematik',spots:[
+ [27.4,57.3,'GPMP setiap peperiksaan','6.48 → 6.29 → 6.05. Bertambah baik, tetapi masih jauh dari ETR 4.67.'],
+ [73.3,57.3,'Lajur D dan E','19 murid di D/E dalam AR2. Mereka dikira lulus tetapi mudah jatuh ke G.'],
+ [81.4,57.3,'Lajur G','36 → 40 → 33. G naik dalam AR1 sebelum turun. Satu titik tidak menceritakan semuanya.'],
+ [87.6,57.3,'TH','2 murid tidak hadir AR2.']]}],
+grisk:[{img:'img/grisk.jpg',cap:'Analisis Risiko G-Risk · Matematik · AR2',spots:[
+ [96,3.6,'Mod 3-Tier / 4-Tier','Mengubah cara murid G dipecahkan. Gunakan 4-Tier jika ramai murid sangat lemah.'],
+ [50,16.3,'Definisi FDI','"Lagi tinggi FDI, lagi ramai calon hampir lulus". Nama "Fail Density" mengelirukan: nilai tinggi ialah berita baik.'],
+ [45.2,44.9,'FDI = 0.545','Lebih separuh murid G berada dalam jarak 9 markah dari lulus.'],
+ [62.9,45.3,'Quick Win = 11','Murid dengan markah 35–39. Sasaran paling cepat ditukar ke lulus, tetapi semak trend mereka dahulu.'],
+ [56,52.6,'Komposisi tier mengikut kelas','5 DEDIKASI menyumbang 15 daripada 33 murid G. Ini juga isu kelas, bukan hanya isu individu.'],
+ [87.9,52.6,'Histogram markah G','Bar paling kanan (35–39) = kumpulan Quick Win.'],
+ [96,96.3,'Naratif automatik','Berguna sebagai ringkasan, tetapi semak angka sebelum dipetik ke laporan.']]}],
+impak:[{img:'img/impak.jpg',cap:'Analisis Impak Kelas · Matematik · TOV → AR2',spots:[
+ [65.3,4.8,'Ikut Kelas / Ikut Mata Pelajaran','Dua jadual berbeza: kelas mana menggerakkan satu subjek, atau subjek mana menggerakkan satu kelas.'],
+ [27.8,41.5,'Naratif automatik','Menyarankan "intervensi berfokus" untuk 5 AMANAH, iaitu kelas dengan GP terbaik.'],
+ [62.5,63.8,'Jurang','GP kedua − GP pertama. Anak panah turun (hijau) = bertambah baik.'],
+ [75,63.8,'Pemberat','Bahagian murid kelas ini daripada jumlah (murid TH dalam peperiksaan kedua tidak dikira). Penting apabila saiz kelas berbeza.'],
+ [16.1,94.2,'5 AMANAH di kedudukan 4','GP terbaik (4.21) tetapi hampir tidak bergerak. Kedudukan mengukur pergerakan, bukan tahap: semak jarak kelas ini ke targetnya dahulu.']]}],
+jurang:[{img:'img/jurang.jpg',cap:'Analisis Jurang · semua subjek · AR2',spots:[
+ [68.5,2.9,'Keseluruhan (GPS)','Boleh juga dipilih satu subjek. Jurang berbeza mengikut subjek.'],
+ [88.7,15.9,'Jurang jantina 0.79','Tahap Besar (≥ 0.50). Semak sama ada jurang kekal dalam kelas yang sama sebelum menyimpulkan.'],
+ [24.2,24,'Naratif','Membandingkan dengan peperiksaan sebelumnya sahaja (AR1: 0.58 → 0.79).'],
+ [26.6,28.2,'Trend jantina','Paksi terbalik: bar lebih pendek = GP lebih baik. Bandingkan jarak antara dua bar di setiap peperiksaan.'],
+ [80.6,57.5,'SESR vs SESSR','SES Rendah berbanding SES Selain Rendah. Murid tanpa label SES (belum diisi) tidak dikira.'],
+ [88.7,63.3,'Jurang SES 1.25','Kedua-dua kumpulan bertambah baik sejak TOV, tetapi jurang melebar: murid SES Rendah bergerak lebih perlahan.'],
+ [24.2,71.3,'Saiz sampel','SESR 40 / SESSR 72. Jika satu kumpulan kecil (bawah 20), tafsir dengan berhati-hati.'],
+ [24.2,75.6,'Trend SES','Jurang: TOV 1.20 → AR1 1.18 → AR2 1.25. Mengecil sedikit, kemudian melebar.']]}],
+vark:[{img:'img/vark.jpg',cap:'Gaya Belajar VARK · Bahasa Melayu · AR2',spots:[
+ [70.2,4,'Satu subjek pada satu masa','Paparan VARK tiada pilihan "semua subjek". Bandingkan beberapa subjek sebelum membuat kesimpulan.'],
+ [6,43,'Paksi terbalik','0 di kanan, 9 di kiri. Bar lebih panjang = GP lebih tinggi = lebih teruk. Bar paling pendek (Auditori 4.25) ialah yang terbaik. Mudah disalah baca.'],
+ [46,49.1,'Dapatan "Auditori terbaik"','GP 4.25, tetapi kumpulan Auditori hanya 16 murid. Seorang dua murid boleh mengubah GP ini.'],
+ [88.7,33.6,'43% Kritikal = Kinestetik','Kinestetik juga 36% daripada semua murid. Kadar kritikal dalam kumpulan: Kinestetik 43%, Visual 35%. Beza sederhana, bukan dominasi.'],
+ [80.6,72.7,'Bar Kinestetik paling tinggi','Kerana kumpulan Kinestetik paling ramai (40 murid). Bilangan besar bukan bermaksud masalah.'],
+ [64.5,94.1,'"Dominasi Kritikal"','Ayat automatik yang tidak mengambil kira saiz kumpulan. Jangan dipetik tanpa semakan.']]}],
+gaction:[{img:'img/gaction.jpg',cap:'Tindakan Berperingkat G-Action · Matematik · TOV → AR2',spots:[
+ [52.4,2.9,'Baseline dan Semasa','Kohort ditentukan oleh peperiksaan Baseline: semua murid yang G (0–39) dalam TOV.'],
+ [64.1,2.9,'Tier Baseline','Tapis kohort ikut tier dalam baseline, contohnya hanya murid G3 (0–15) dalam TOV.'],
+ [25.8,14.5,'Panduan status','Enam status: Lulus (keluar G), On Track (naik 3+), Statik (berubah kurang 3), At Risk / Kritikal, dan Baru G.'],
+ [24.2,33.3,'Kohort G = 36','Murid G dalam TOV. Murid yang kini lulus kekal dalam kohort supaya kejayaan dikira.'],
+ [24.2,40,'Keluar G (Lulus) = 10','27.8% kohort kini 40 ke atas. Inilah ukuran utama kejayaan intervensi.'],
+ [88.7,40,'Baru jatuh ke G = 7','Lulus dalam TOV tetapi G dalam AR2. Tidak dicampur dalam kohort; siasat punca penurunan mereka.'],
+ [85.5,55.1,'Cadangan Program','Ikut tier semasa murid yang masih G. Templat tetap: sesuaikan dengan kapasiti guru dan jadual.'],
+ [25,67.8,'Purata markah ikut tier baseline','Kumpulan yang sama dibandingkan sebelum dan selepas. G2 baseline naik dari 24.5 ke 32.1.'],
+ [76.6,67.8,'Pergerakan tier kohort','Bar hijau "Lulus" = 10 murid yang keluar dari G. G1 berkurang dari 20 ke 12.'],
+ [48.4,93.4,'Naratif','Ringkasan kohort: berapa lulus, On Track, Statik, At Risk, Kritikal, dan Baru G.']]}],
+individu:[{img:'img/rumusan.jpg',cap:'Rumusan Keseluruhan · AR2',spots:[
+ [71.4,3.6,'Status Sijil','"Layak" menyingkirkan murid yang gagal mana-mana subjek berkategori WAJIB.'],
+ [88.7,3.2,'Gagal dalam mata pelajaran','Tapis murid yang gagal subjek tertentu untuk merancang intervensi subjek.'],
+ [71.8,17.1,'Near Miss = 7','Semua A kecuali satu subjek. Senarai sasaran bernilai tinggi.'],
+ [96.8,17.1,'LMS = 85','Hanya menyemak BM dan Sejarah. Peraturannya berbeza dengan penapis "Layak".'],
+ [64.5,31.9,'Sel TH (kelabu)','Subjek TH tidak dikira dalam GP individu murid.'],
+ [96.8,36.7,'GP individu','Disusun dari terbaik. Semua subjek diberi berat sama, jadi bandingkan murid dalam aliran yang sama.']]},
+ {img:'img/profil.jpg',cap:'Profil Murid · contoh murid 5 DEDIKASI',spots:[
+ [24.2,9.3,'Pilih murid','Pilih tingkatan, kelas, kemudian murid.'],
+ [68.5,16.6,'Cetak PDF','PDF individu atau seluruh kelas, untuk perjumpaan dengan murid atau ibu bapa.'],
+ [17.5,25.9,'Label VARK','Label isian guru. Gunakan untuk variasi PdP, bukan sebagai sebab murid lemah.'],
+ [43.7,58.6,'AR1 30 vs OTR1 46','Murid ini 16 markah di bawah sasaran pertengahan dalam BM.'],
+ [74.2,59.3,'AR2 24 vs OTR2 49','Jurang melebar ke 25 markah. Corak menurun berterusan, bukan satu hari yang buruk.'],
+ [79.8,78.3,'Semua subjek jatuh serentak','AR2 lebih rendah daripada AR1 dalam semua 7 subjek. Ini isu murid (kehadiran, motivasi, keluarga), bukan isu subjek.']]}]
+};
+const shotHTML=(id,s)=>`<div class="shot-wrap" data-shot="${id}"><p class="shot-cap">${s.cap} · <span class="shot-hint"><span class="hv">halakan tetikus atau </span>klik nombor untuk penerangan, klik gambar untuk zum</span></p>
+ <div class="shot" role="group" aria-label="Tangkapan skrin: ${s.cap}"><img src="${s.img}" alt="Tangkapan skrin Dashboard SPPM: ${s.cap}" loading="lazy" decoding="async" width="1240" height="${IMG_DIM[s.img]||800}">${s.spots.map((p,i)=>`<button class="spot" style="left:${p[0]}%;top:${p[1]}%" data-i="${i}" aria-label="${i+1}. ${p[2]}" aria-describedby="${id}-pop">${i+1}</button>`).join('')}<div class="pop" id="${id}-pop" role="tooltip" hidden></div></div>
+ <div class="tour" aria-live="polite"><div class="num">1</div><div class="txt"><b>${s.spots[0][2]}</b>${s.spots[0][3]}</div><div><div class="nav"><button data-step="-1" aria-label="Penanda sebelum">${svg('left')}</button><button data-step="1" aria-label="Penanda seterusnya">${svg('right')}</button></div><div class="count">1/${s.spots.length}</div></div></div></div>`;
+const shotData=id=>{const [m,k]=id.split(/-(?=\d+$)/);return SHOTS[m][+k]};
+// Papar penerangan terus di sebelah nombor (tidak perlu tatal ke bawah gambar)
+function showPop(shot,p,i){
+  const pop=shot.querySelector('.pop');if(!pop)return;
+  pop.innerHTML='<button class="pin" aria-label="Tutup penerangan">'+svg('x','sm')+'</button><b>'+(i+1)+'. '+p[2]+'</b><span>'+p[3]+'</span>';
+  pop.hidden=false;pop.className='pop';
+  Object.assign(pop.style,{left:'auto',right:'auto',top:'auto',bottom:'auto',transform:'none',margin:'0'});
+  if(shot.clientWidth<560){
+    pop.classList.add('narrow');pop.style.left='8px';pop.style.right='8px';
+    if(p[1]>55){pop.style.bottom=(100-p[1])+'%';pop.style.marginBottom='20px'}else{pop.style.top=p[1]+'%';pop.style.marginTop='20px'}
+  }else{
+    pop.style.top=p[1]+'%';
+    if(p[0]>55){pop.style.right=(100-p[0])+'%';pop.style.marginRight='22px'}else{pop.style.left=p[0]+'%';pop.style.marginLeft='22px'}
+    pop.style.transform='translateY('+(p[1]<15?'-15%':p[1]>85?'-85%':'-50%')+')';
+  }
+}
+function hidePop(shot){const pop=shot&&shot.querySelector('.pop');if(pop){pop.hidden=true;pop.dataset.pinned=''}}
+function setSpot(wrap,i,show){const s=shotData(wrap.dataset.shot);i=(i+s.spots.length)%s.spots.length;wrap.dataset.cur=i;wrap.querySelectorAll('.shot .spot').forEach((b,j)=>b.classList.toggle('on',j===i));const p=s.spots[i];wrap.querySelector('.tour .num').textContent=i+1;wrap.querySelector('.tour .txt').innerHTML=`<b>${p[2]}</b>${p[3]}`;wrap.querySelector('.tour .count').textContent=(i+1)+'/'+s.spots.length;if(show){const sh=wrap.querySelector('.shot');showPop(sh,p,i);sh.querySelector('.pop').dataset.pinned='1'}}
+
+/* ===================== IKON ===================== */
+const ICO={"menu":"<path d=\"M4 6h16M4 12h16M4 18h16\"/>","moon":"<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\"/>","scale":"<path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"/><path d=\"m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\"/><path d=\"M7 21h10\"/><path d=\"M12 3v18\"/><path d=\"M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\"/>","users":"<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>","trend":"<path d=\"m22 7-8.5 8.5-5-5L2 17\"/><path d=\"M16 7h6v6\"/>","search":"<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>","checkCircle":"<path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"/><path d=\"m9 11 3 3L22 4\"/>","star":"<path d=\"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z\"/>","alert":"<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>","repeat":"<path d=\"m17 2 4 4-4 4\"/><path d=\"M3 11v-1a4 4 0 0 1 4-4h14\"/><path d=\"m7 22-4-4 4-4\"/><path d=\"M21 13v1a4 4 0 0 1-4 4H3\"/>","clip":"<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"m9 14 2 2 4-4\"/>","camera":"<path d=\"M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z\"/><circle cx=\"12\" cy=\"13\" r=\"3\"/>","check":"<path d=\"M20 6 9 17l-5-5\"/>","up":"<path d=\"m5 12 7-7 7 7\"/><path d=\"M12 19V5\"/>","left":"<path d=\"m15 18-6-6 6-6\"/>","right":"<path d=\"m9 18 6-6-6-6\"/>","x":"<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>","compass":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z\"/>","calendar":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M16 2v4M8 2v4M3 10h18\"/>","help":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\"/><path d=\"M12 17h.01\"/>","printer":"<path d=\"M6 9V2h12v7\"/><path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"/><rect width=\"12\" height=\"8\" x=\"6\" y=\"14\"/>","reset":"<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/><path d=\"M3 3v5h5\"/>"};
+const svg=(n,cls='')=>`<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICO[n]}</svg>`;
+// Saiz sebenar gambar (elak lompatan susun atur semasa dimuat)
+const IMG_DIM={'img/utama.jpg':818,'img/matriks.jpg':760,'img/normaliti.jpg':770,'img/gpmp.jpg':905,'img/gred.jpg':525,'img/grisk.jpg':1225,'img/impak.jpg':622,'img/jurang.jpg':1524,'img/vark.jpg':1100,'img/gaction.jpg':1524,'img/rumusan.jpg':1112,'img/profil.jpg':1400};
+
+/* ===================== RENDER ===================== */
+const $=s=>document.querySelector(s);
+const store={get(k,d){try{const v=localStorage.getItem('sppm-panduan-'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('sppm-panduan-'+k,JSON.stringify(v))}catch(e){}}};
+
+// GP scale
+const GR=['A+','A','A-','B+','B','C+','C','D','E','G'];const COL=['#047857','#059669','#10b981','#2563eb','#3b82f6','#d97706','#f59e0b','#f97316','#ef4444','#b91c1c'];
+$('#gpScale').innerHTML=GR.map((g,i)=>`<div style="background:${COL[i]}">${g}<small>${i}</small></div>`).join('');
+const gpS=()=>{const v=+$('#gpSlide').value;$('#gpVal').textContent=v.toFixed(2);const lo=Math.floor(v),hi=Math.min(9,Math.ceil(v));$('#gpGrade').textContent=lo===hi?GR[lo]:GR[lo]+' / '+GR[hi]};$('#gpSlide').oninput=gpS;gpS();
+$('#glossary').innerHTML=GLOSS.map(g=>`<tr><td><b>${g[0]}</b></td><td>${g[1]}</td><td style="color:var(--ink-2)">${g[2]}</td></tr>`).join('');
+
+// ===================== CARA TERANGKAN (modul yang sukar diterangkan) =====================
+const exHead=(say,analogi)=>`<div class="ex-30"><div class="lbl">${svg('help','sm')}Terangkan dalam 30 saat</div><p>${say}</p></div><div class="ex-box"><div class="lbl">${svg('compass','sm')}Analogi mudah</div><p>${analogi}</p></div>`;
+const exScript=(t)=>`<div class="ex-box"><div class="lbl">${svg('calendar','sm')}Skrip untuk mesyuarat</div><div class="ex-script"><q>${t}</q></div></div>`;
+const EXPLAIN={
+normaliti:{html:exHead('Graf ini mengira <b>berapa murid dalam setiap julat 10 markah</b>. Bentuk graf memberitahu sama ada murid berkumpul di tengah, terpisah kepada dua kumpulan, atau ramai tertinggal di bawah 40.','Bayangkan semua murid beratur di padang mengikut markah: 0 di hujung kiri, 100 di hujung kanan. Graf ini ialah <b>ketinggian barisan</b> di setiap tempat. Bonggol tinggi = ramai murid berdiri di situ.')
+ +`<div class="ex-viz"><h3>Cuba: pilih bentuk taburan</h3><div class="chipbtns" id="nmxBtns"><button class="on" data-k="sihat">Sihat</button><button data-k="dua">Dua kumpulan</button><button data-k="bawah">Ramai di bawah</button><button data-k="gerak">Bergerak (TOV → AR2)</button></div><svg class="nm-svg" id="nmxSvg" viewBox="0 0 520 210" role="img" aria-label="Contoh bentuk taburan markah"></svg><div class="ex-cap" id="nmxCap"></div></div>`
+ +exScript('Graf ini menunjukkan berapa murid dalam setiap julat 10 markah. Untuk Matematik, kebanyakan murid berkumpul sekitar 40, iaitu betul-betul di sempadan lulus. Sedikit kenaikan markah boleh mengubah peratus lulus dengan besar, jadi tumpuan kita ialah murid dalam julat 30 hingga 49.'),
+ init(){const P={sihat:{a:[0,1,3,8,15,22,15,8,3,1,0],cap:'<b>Satu bonggol, kebanyakan di atas 40.</b>Pengajaran biasa sesuai untuk majoriti. Tumpu kepada ekor kiri: murid yang masih di bawah garis 40.'},
+  dua:{a:[0,2,8,14,8,4,8,14,8,2,0],cap:'<b>Dua bonggol = dua kumpulan berbeza.</b>Contohnya aliran sains dan sastera, atau kelas kuat dan lemah. Purata tunggal mengelirukan. Tapis ikut kelas dan rancang dua strategi berbeza.'},
+  bawah:{a:[2,8,14,18,14,9,5,3,1,0,0],cap:'<b>Bonggol di sebelah kiri garis 40.</b>Ramai murid belum menguasai asas. Fokus kepada pengukuhan asas untuk seluruh kumpulan, bukan latih tubi soalan peperiksaan.'},
+  gerak:{a:[0,1,3,8,14,20,15,9,4,2,0],b:[0,2,6,12,20,16,9,4,2,1,0],cap:'<b>Garis putus-putus = TOV, kawasan berwarna = AR2.</b>Seluruh bonggol beralih ke kanan: PdP menggerakkan majoriti. Semak sama ada ekor kiri (murid paling lemah) juga ikut bergerak.'}};
+  const X=i=>40+i*45,Y=v=>175-v*6.2;
+  const path=a=>{let d='M'+X(0)+' '+Y(a[0]);for(let i=1;i<a.length;i++){const cx=(X(i-1)+X(i))/2;d+=' C'+cx+' '+Y(a[i-1])+' '+cx+' '+Y(a[i])+' '+X(i)+' '+Y(a[i])}return d};
+  const draw=k=>{const p=P[k];let s='<line x1="'+X(4)+'" y1="20" x2="'+X(4)+'" y2="178" stroke="var(--good)" stroke-width="2" stroke-dasharray="5 4"/><text x="'+(X(4)+6)+'" y="30" style="fill:var(--good);font-weight:700">Lulus (40)</text>';
+   s+='<path d="'+path(p.a)+' L'+X(10)+' 175 L'+X(0)+' 175 Z" fill="color-mix(in srgb,var(--brand) 25%,transparent)" stroke="var(--brand)" stroke-width="2.5"/>';
+   if(p.b)s+='<path d="'+path(p.b)+'" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 4"/>';
+   s+='<line x1="30" y1="175" x2="500" y2="175" stroke="var(--line)"/>';for(let i=0;i<=10;i++)s+='<text x="'+X(i)+'" y="195" text-anchor="middle">'+(i*10)+'</text>';
+   s+='<text x="270" y="209" text-anchor="middle">Markah</text>';nmxSvg.innerHTML=s;nmxCap.innerHTML=p.cap;
+   nmxBtns.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k===k))};
+  nmxBtns.onclick=e=>{const b=e.target.closest('button');if(b)draw(b.dataset.k)};draw('sihat')}},
+grisk:{html:exHead('G-Risk hanya melihat murid yang gagal (bawah 40) dan bertanya satu soalan: <b>berapa jauh lagi setiap murid dari lulus?</b> Jarak itu dipanggil DPM.','Bayangkan <b>tangga 40 anak</b> ke pintu lulus. DPM ialah bilangan anak tangga yang tinggal. Murid 37 markah tinggal 3 anak tangga: cukup sedikit tolakan. Murid 10 markah tinggal 30 anak tangga: dia perlukan tangga yang lain, bukan tolakan.')
+ +`<div class="ex-viz"><h3>33 murid G Matematik (AR2) di atas "tangga" 0–40 · klik setiap kawasan</h3><div class="ruler" id="rlr" role="group" aria-label="Taburan murid G mengikut markah"></div><div class="chipbtns"><button id="rlrQW">Tunjuk Quick Win (35–39)</button></div><div class="ex-cap" id="rlrCap"><b>Klik kawasan berwarna.</b>Setiap titik ialah seorang murid. Lebih ke kanan = lebih hampir lulus.</div></div>`
+ +`<div class="ex-box"><div class="lbl">${svg('help','sm')}Bagaimana dengan FDI?</div><p><b>FDI</b> = bahagian murid G yang sudah berada di anak tangga teratas (31–39). Di sini 18 daripada 33 = <b>0.545</b>. Walaupun namanya "Fail Density", <b>nilai tinggi ialah berita baik</b>: ramai murid gagal sebenarnya hampir lulus.</p></div>`
+ +exScript('Daripada 112 murid, 33 gagal Matematik dalam AR2. Lebih separuh daripada mereka (18 orang) kurang 9 markah sahaja daripada lulus, dan 11 orang kurang 5 markah. Jika kita fokus kepada 11 murid ini, peratus lulus boleh naik hampir 10 mata. Dua murid kritikal pula perlukan pelan yang berbeza.'),
+ init(){const bins=[[10,2],[15,2],[20,5],[25,6],[30,7],[35,11]];const B=[{k:'G3',a:0,b:15,c:'#ef4444',t:'<b>G3 Kritikal (0–15): 2 murid.</b>Jarak ke lulus 25 markah atau lebih. Perlukan pemulihan asas dan bimbingan kecil, bukan kelas tambahan biasa.'},{k:'G2',a:16,b:30,c:'#f59e0b',t:'<b>G2 Lemah (16–30): 13 murid.</b>Jarak 10 hingga 24 markah. Perlukan pengukuhan topik asas yang paling kerap keluar.'},{k:'G1',a:31,b:39,c:'#3b82f6',t:'<b>G1 Hampir Lulus (31–39): 18 murid.</b>Jarak 1 hingga 9 markah. Sasaran utama untuk menaikkan peratus lulus dengan cepat.'}];
+  const pc=m=>m/40*100;let h='';B.forEach(b=>{h+='<button class="band" data-k="'+b.k+'" style="left:'+pc(b.a)+'%;width:'+(pc(b.b+1)-pc(b.a))+'%;background:'+b.c+'" aria-label="'+b.k+'"><span>'+b.k+'</span></button>'});
+  h+='<div class="qw" id="rlrQwZone" style="left:'+pc(35)+'%;width:'+(pc(40)-pc(35))+'%;display:none"></div>';
+  bins.forEach(([s,n])=>{for(let j=0;j<n;j++){const m=s+(j%5)+0.5;const row=Math.floor(j/5);h+='<i class="dot" style="left:'+pc(m)+'%;bottom:'+(10+row*14)+'px"></i>'}});
+  [0,10,20,30].forEach(t=>h+='<span class="tick" style="left:'+pc(t)+'%">'+t+'</span>');h+='<span class="pass">40 lulus</span>';rlr.innerHTML=h;
+  rlr.onclick=e=>{const b=e.target.closest('.band');if(!b)return;rlr.querySelectorAll('.band').forEach(x=>x.classList.toggle('on',x===b));rlrCap.innerHTML=B.find(x=>x.k===b.dataset.k).t};
+  rlrQW.onclick=()=>{const z=rlrQwZone;const on=z.style.display==='none';z.style.display=on?'block':'none';rlrQW.classList.toggle('on',on);if(on)rlrCap.innerHTML='<b>Quick Win (35–39): 11 murid.</b>Hanya 1 hingga 5 markah lagi untuk lulus. Dahulukan mereka minggu ini, tetapi semak dahulu trend markah mereka.'}}},
+gaction:{html:exHead('G-Action ialah rekod <b>"sebelum dan selepas"</b> bagi murid yang gagal dalam peperiksaan baseline. Ia menjawab: daripada semua murid yang gagal pada TOV, <b>berapa yang sudah keluar dari G</b>, berapa yang sedang bergerak, dan berapa yang tersekat?','Fikirkan G-Action seperti <b>buku rekod wad hospital</b>. Semua pesakit yang masuk wad (murid G pada TOV) direkod. Yang sudah sembuh dan pulang (Lulus) <b>masih dikira dalam rekod</b>: itulah kejayaan wad. Pesakit baru yang masuk kemudian (Baru G) dicatat dalam senarai berasingan.')
+ +`<div class="ex-viz"><h3>Kohort Matematik: TOV → AR2 · klik setiap bahagian</h3><div class="flow"><div class="src"><strong>36</strong><small>murid G pada TOV</small></div><div class="stack" id="gaxStack"></div></div><div class="flow-new"><span style="color:var(--muted);font-size:14px">Senarai berasingan:</span><button id="gaxNew">+7 Baru G</button></div><div class="ex-cap" id="gaxCap"><b>Klik mana-mana bahagian bar.</b>Setiap bahagian ialah sekumpulan murid daripada 36 murid yang gagal pada TOV.</div></div>`
+ +exScript('Pada TOV, 36 murid gagal Matematik. Dalam AR2, 10 daripada mereka sudah lulus dan 9 lagi sedang naik, jadi lebih separuh bergerak ke arah yang betul. Tetapi 7 murid langsung tidak berganjak dan 10 lagi menurun: itulah fokus kita bulan ini. Kita juga ada 7 murid baharu yang jatuh ke G, dan kita perlu tahu sebabnya.'),
+ init(){const S=[['Lulus',10,'#059669','<b>Lulus (keluar G): 10 murid, 28%.</b>Gagal pada TOV, kini 40 ke atas dalam AR2. Inilah ukuran utama kejayaan intervensi.'],['On Track',9,'#10b981','<b>On Track: 9 murid.</b>Masih gagal, tetapi naik sekurang-kurangnya 3 markah. Sedang bergerak: teruskan dan pantau kadar kenaikan.'],['Statik',7,'#94a3b8','<b>Statik: 7 murid.</b>Berubah kurang 3 markah. Intervensi belum menyentuh mereka: tukar pendekatan, jangan ulang kelas yang sama.'],['At Risk',8,'#f59e0b','<b>At Risk: 8 murid.</b>Markah turun 3 atau lebih. Siasat segera: kehadiran, motivasi, masalah keluarga?'],['Kritikal',2,'#ef4444','<b>Kritikal: 2 murid.</b>Di tier terendah (0–15) dan tidak bergerak. Perlukan bimbingan individu atau pemulihan asas.']];
+  gaxStack.innerHTML=S.map((s,i)=>'<button data-i="'+i+'" style="flex:'+s[1]+';background:'+s[2]+'" aria-label="'+s[0]+': '+s[1]+' murid">'+s[1]+'<small>'+s[0]+'</small></button>').join('');
+  const clr=()=>{gaxStack.querySelectorAll('button').forEach(b=>b.classList.remove('on'));gaxNew.classList.remove('on')};
+  gaxStack.onclick=e=>{const b=e.target.closest('button');if(!b)return;clr();b.classList.add('on');gaxCap.innerHTML=S[+b.dataset.i][3]};
+  gaxNew.onclick=()=>{clr();gaxNew.classList.add('on');gaxCap.innerHTML='<b>Baru G: 7 murid.</b>Lulus pada TOV tetapi gagal dalam AR2. Mereka bukan sebahagian daripada kohort 36, tetapi perlu disiasat secara berasingan: apa yang berubah untuk mereka?'}}}
+};
+
+// modules
+$('#modules').innerHTML=MODS.map((m,i)=>{
+  const ex=EXPLAIN[m.id];
+  const panels=[
+    {t:'Lihat skrin',ic:'camera',h:(SHOTS[m.id]||[]).map((s,k)=>shotHTML(m.id+'-'+k,s)).join('')},
+    ...(ex?[{t:'Cara terangkan',ic:'help',h:'<div class="explain">'+ex.html+'</div>'}]:[]),
+    {t:'Ringkas',h:m.sum},
+    {t:'Cara baca',h:`<ol class="steps">${m.steps.map(s=>`<li><div>${s}</div></li>`).join('')}</ol><div class="ask"><b>Tanya dalam mesyuarat:</b> ${m.ask}</div>`},
+    {t:'Awas',h:`<div class="warn-list">${m.warn.map(w=>`<div class="warn-item"><b>${svg('alert','sm')}${w[0]}</b>${w[1]}</div>`).join('')}</div>`},
+    {t:'Cuba sendiri',h:`<div class="lab">${m.lab}</div>`},
+    {t:'Kuiz',h:`<div class="quiz" data-ans="${m.quiz.ans}"><p><b>${m.quiz.q}</b></p>${m.quiz.opts.map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}<div class="exp" role="status">${m.quiz.exp}</div></div>`}
+  ];
+  const prev=i>0?{id:MODS[i-1].id,t:MODS[i-1].title}:{id:'gp',t:'Peraturan emas: GP'};
+  const next=i<MODS.length-1?{id:MODS[i+1].id,t:MODS[i+1].title}:{id:'mitos',t:'Mitos vs Fakta'};
+  return `
+<section class="mod" id="${m.id}" data-title="${m.title}" data-grp="${m.grp}">
+  <div class="mod-head"><div class="mod-num">${i+1}</div><div><h2>${m.title}</h2><div class="q">Soalan yang dijawab: ${m.q}</div></div><span class="where">Menu: ${m.where}</span></div>
+  <div class="tabs" role="tablist" aria-label="Bahagian modul ${m.title}">${panels.map((p,j)=>`<button role="tab" id="${m.id}-t${j}" aria-controls="${m.id}-p${j}" aria-selected="${j===0}" tabindex="${j===0?0:-1}" data-p="${j}">${p.ic?svg(p.ic,'sm'):''}${p.t}</button>`).join('')}</div>
+  ${panels.map((p,j)=>`<div class="panel${j===0?' on':''}" role="tabpanel" id="${m.id}-p${j}" aria-labelledby="${m.id}-t${j}" tabindex="0">${p.h}</div>`).join('\n  ')}
+  <div class="mod-foot"><button class="done-btn" data-done="${m.id}" aria-pressed="false">${svg('check','sm')}<span>Tandakan selesai dibaca</span></button><nav class="pager" aria-label="Navigasi modul"><a class="prev" href="#${prev.id}"><small>${svg('left','sm')}Sebelum</small><span>${prev.t}</span></a><a class="next" href="#${next.id}"><small>Seterusnya${svg('right','sm')}</small><span>${next.t}</span></a></nav></div>
+</section>`}).join('');
+Object.values(EXPLAIN).forEach(x=>{try{x.init()}catch(e){console.error('explain',e)}});
+MODS.forEach(m=>{try{m.init()}catch(e){console.error(m.id,e)}});
+
+// tabs
+const selectTab=(t,focus)=>{const sec=t.closest('section');sec.querySelectorAll('.tabs button').forEach(b=>{const on=b===t;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});sec.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('on',i==t.dataset.p));if(focus)t.focus()};
+document.addEventListener('keydown',e=>{const t=e.target.closest('.tabs button');if(!t)return;const all=[...t.parentElement.children];let i=all.indexOf(t);if(e.key==='ArrowRight')i=(i+1)%all.length;else if(e.key==='ArrowLeft')i=(i-1+all.length)%all.length;else if(e.key==='Home')i=0;else if(e.key==='End')i=all.length-1;else return;e.preventDefault();selectTab(all[i],true)});
+document.addEventListener('click',e=>{const t=e.target.closest('.tabs button');if(t){selectTab(t)}
+  const o=e.target.closest('.quiz .opt');if(o){const q=o.closest('.quiz');if(q.classList.contains('answered'))return;q.classList.add('answered');const a=+q.dataset.ans;q.querySelectorAll('.opt').forEach((b,j)=>{if(j===a)b.classList.add('right');else if(b===o)b.classList.add('wrong')})}});
+
+// screenshots: spot, tour, lightbox
+document.querySelectorAll('.shot-wrap').forEach(w=>{setSpot(w,0,false);const s=w.querySelector('.shot');s.tabIndex=0;s.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===s){e.preventDefault();s.click()}})});
+const lb=document.createElement('div');lb.className='lightbox';lb.setAttribute('role','dialog');lb.setAttribute('aria-modal','true');lb.setAttribute('aria-label','Tangkapan skrin dizum');lb.innerHTML='<button class="close">'+svg('x','sm')+' Tutup</button><div class="lb-body"></div>';let lbReturn=null;document.body.appendChild(lb);
+document.addEventListener('click',e=>{
+  // butang tutup popover
+  const pin=e.target.closest('.pop .pin');if(pin){e.stopPropagation();hidePop(pin.closest('.shot'));return}
+  if(e.target.closest('.pop')){e.stopPropagation();return} // klik dalam popover: jangan buka zum
+  const sp=e.target.closest('.spot');
+  if(sp){e.stopPropagation();const i=+sp.dataset.i;const lbw=sp.closest('.lightbox');
+    if(lbw){const src=lbw.dataset.src;const w=document.querySelector(`.shot-wrap[data-shot="${src}"]`);setSpot(w,i);lbw.querySelectorAll('.spot').forEach(b=>b.classList.toggle('on',b===sp));const sh=lbw.querySelector('.shot');showPop(sh,shotData(src).spots[i],i);sh.querySelector('.pop').dataset.pinned='1';return}
+    const w=sp.closest('.shot-wrap');const pop=w.querySelector('.pop');
+    if(+w.dataset.cur===i&&!pop.hidden&&pop.dataset.pinned==='1'){hidePop(w.querySelector('.shot'));return} // klik kali kedua: tutup
+    setSpot(w,i,true);return}
+  const st=e.target.closest('.tour [data-step]');if(st){const w=st.closest('.shot-wrap');setSpot(w,(+w.dataset.cur||0)+(+st.dataset.step),true);return}
+  const im=e.target.closest('.shot-wrap .shot');if(im&&!e.target.closest('.lightbox')){const w=im.closest('.shot-wrap');hidePop(im);lb.dataset.src=w.dataset.shot;lb.querySelector('.lb-body').innerHTML=im.outerHTML;const lbPop=lb.querySelector('.pop');if(lbPop){lbPop.removeAttribute('id');lbPop.hidden=true}lb.classList.add('on');document.body.style.overflow='hidden';lbReturn=im;lb.querySelector('.close').focus();return}
+  if(e.target.closest('.lightbox .close')||(e.target.closest('.lightbox')&&!e.target.closest('.spot'))){lb.classList.remove('on');document.body.style.overflow='';if(lbReturn)lbReturn.focus();}
+});
+// Halakan tetikus (peranti bertetikus sahaja): penerangan muncul serta-merta
+if(matchMedia('(hover:hover)').matches){
+  document.addEventListener('mouseover',e=>{const sp=e.target.closest('.shot-wrap .spot');if(!sp)return;const w=sp.closest('.shot-wrap');const i=+sp.dataset.i;setSpot(w,i);const sh=w.querySelector('.shot');showPop(sh,shotData(w.dataset.shot).spots[i],i);sh.querySelector('.pop').dataset.pinned=''});
+  document.addEventListener('mouseout',e=>{const sp=e.target.closest('.shot-wrap .spot');if(!sp)return;if(e.relatedTarget&&(e.relatedTarget.closest('.pop')||e.relatedTarget.closest('.spot')))return;const sh=sp.closest('.shot');const pop=sh.querySelector('.pop');if(pop.dataset.pinned!=='1')pop.hidden=true});
+}
+// Fokus papan kekunci pada nombor: papar penerangan
+document.addEventListener('focusin',e=>{const sp=e.target.closest('.shot-wrap .spot');if(!sp)return;const w=sp.closest('.shot-wrap');const i=+sp.dataset.i;setSpot(w,i);showPop(w.querySelector('.shot'),shotData(w.dataset.shot).spots[i],i)});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const openPop=document.querySelector('.shot-wrap .pop:not([hidden])');if(openPop){openPop.hidden=true;return}if(lb.classList.contains('on')){lb.classList.remove('on');document.body.style.overflow='';if(lbReturn)lbReturn.focus()}else if($('#side').classList.contains('open')){setMenu(false);$('#menuBtn').focus()}});
+
+// myths
+$('#myths').innerHTML=MYTHS.map((m,i)=>`<div class="myth"><button class="myth-q" aria-expanded="false" aria-controls="myth-a${i}"><span class="tag">Mitos</span><span class="txt">${m[0]}</span><span class="chev">${svg('right','sm')}</span></button><div class="myth-a" id="myth-a${i}"><span class="tag">Fakta</span><p>${m[1]}</p></div></div>`).join('');
+const setMyth=(el,open)=>{el.classList.toggle('open',open);el.querySelector('.myth-q').setAttribute('aria-expanded',open)};
+$('#myths').addEventListener('click',e=>{const q=e.target.closest('.myth-q');if(!q)return;const m=q.closest('.myth');setMyth(m,!m.classList.contains('open'))});
+$('#mythAll').addEventListener('click',()=>{const all=[...document.querySelectorAll('.myth')];const open=!all.every(m=>m.classList.contains('open'));all.forEach(m=>setMyth(m,open));$('#mythAll').textContent=open?'Sembunyikan semua fakta':'Tunjuk semua fakta'});
+
+// checklist
+let ck=store.get('ck',{});
+const renderCk=()=>{$('#checklist').innerHTML=CHECK.map((g,gi)=>`<div class="ck-h">${g[0]}</div>`+g[1].map((t,ti)=>{const k=gi+'-'+ti;return `<label class="ck ${ck[k]?'on':''}"><input type="checkbox" data-k="${k}" ${ck[k]?'checked':''}><span>${t}</span></label>`}).join('')).join('')};
+renderCk();$('#checklist').onchange=e=>{const k=e.target.dataset.k;ck[k]=e.target.checked;store.set('ck',ck);e.target.closest('.ck').classList.toggle('on',e.target.checked)};
+$('#ckReset').onclick=()=>{ck={};store.set('ck',ck);renderCk()};
+
+// nav + progress
+const secs=[...document.querySelectorAll('section.mod')];
+let done=new Set(store.get('done',[]));
+const buildNav=(q='')=>{q=q.trim().toLowerCase();let html='',last='';secs.forEach(s=>{const txt=s.textContent.toLowerCase();if(q&&!txt.includes(q)&&!s.dataset.title.toLowerCase().includes(q))return;if(s.dataset.grp!==last){html+=`<div class="grp">${s.dataset.grp}</div>`;last=s.dataset.grp}html+=`<a href="#${s.id}" data-id="${s.id}" class="${done.has(s.id)?'done':''}">${s.dataset.title}<span class="tick" aria-label="selesai">${svg('check','sm')}</span></a>`});$('#navList').innerHTML=html||'<p style="font-size:14px;color:var(--muted);padding:0 8px">Tiada padanan.</p>'};
+buildNav();$('#search').oninput=e=>buildNav(e.target.value);
+const modIds=MODS.map(m=>m.id);
+const updProg=()=>{const n=modIds.filter(i=>done.has(i)).length;$('#progBar').style.width=(n/modIds.length*100)+'%';$('#progTxt').textContent=n+'/'+modIds.length;document.querySelectorAll('[data-done]').forEach(b=>{const on=done.has(b.dataset.done);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);b.querySelector('span').textContent=on?'Selesai dibaca':'Tandakan selesai dibaca'});buildNav($('#search').value)};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-done]');if(!b)return;const id=b.dataset.done;done.has(id)?done.delete(id):done.add(id);store.set('done',[...done]);updProg()});
+$('#progTxt').textContent='0/'+modIds.length;$('#progTxt').setAttribute('aria-label','Modul selesai dibaca');updProg();
+const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){document.querySelectorAll('#navList a').forEach(a=>a.classList.toggle('active',a.dataset.id===en.target.id))}}),{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>io.observe(s));
+function setMenu(open){$('#side').classList.toggle('open',open);$('#menuBtn').setAttribute('aria-expanded',open);$('#menuBtn').setAttribute('aria-label',open?'Tutup menu topik':'Buka menu topik');$('#menuBtn').innerHTML=svg(open?'x':'menu');document.body.style.overflow=open?'hidden':''}
+$('#navList').addEventListener('click',e=>{if(e.target.closest('a'))setMenu(false)});
+$('#menuBtn').onclick=()=>setMenu(!$('#side').classList.contains('open'));
+
+// carian hero (corak laman dokumentasi)
+const hs=$('#heroSearch'),hsr=$('#hsResults');
+const doHeroSearch=()=>{const q=hs.value.trim().toLowerCase();if(!q){hsr.classList.remove('on');hsr.innerHTML='';return}
+  const hits=secs.filter(s=>s.dataset.title.toLowerCase().includes(q)||s.textContent.toLowerCase().includes(q)).slice(0,6);
+  hsr.innerHTML=hits.length?hits.map(s=>'<a role="option" href="#'+s.id+'">'+svg('right','sm')+s.dataset.title+'<small>'+s.dataset.grp+'</small></a>').join(''):'<a role="option" href="#mitos">Tiada padanan. Cuba "GP", "TH" atau "G-Risk".</a>';hsr.classList.add('on')};
+hs.addEventListener('input',doHeroSearch);
+hs.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){const a=hsr.querySelector('a');if(a){e.preventDefault();a.focus()}}else if(e.key==='Escape'){hs.value='';doHeroSearch()}});
+hsr.addEventListener('keydown',e=>{const a=e.target.closest('a');if(!a)return;if(e.key==='ArrowDown'&&a.nextElementSibling){e.preventDefault();a.nextElementSibling.focus()}else if(e.key==='ArrowUp'){e.preventDefault();(a.previousElementSibling||hs).focus()}});
+hsr.addEventListener('click',()=>{hsr.classList.remove('on')});
+document.addEventListener('click',e=>{if(!e.target.closest('.hero-search'))hsr.classList.remove('on')});
+const toTop=document.createElement('button');toTop.className='to-top';toTop.setAttribute('aria-label','Kembali ke atas');toTop.innerHTML=svg('up');document.body.appendChild(toTop);
+toTop.onclick=()=>{window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});$('#main').focus({preventScroll:true})};
+addEventListener('scroll',()=>toTop.classList.toggle('on',scrollY>900),{passive:true});
+
+// theme
+const applyTheme=t=>{if(t)document.documentElement.dataset.theme=t;else delete document.documentElement.dataset.theme};applyTheme(store.get('theme',null));
+$('#themeBtn').onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');const nx=cur==='dark'?'light':'dark';applyTheme(nx);store.set('theme',nx)};
+</script>
+</body>
+</html>
