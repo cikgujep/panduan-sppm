@@ -2317,7 +2317,12 @@
                                 <option value="15">15 markah</option>
                             </select></div>
                     </div>
-                    <p id="kual-cand-summary" class="text-xs font-semibold text-slate-600 mb-3"></p>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <p id="kual-cand-summary" class="text-xs font-semibold text-slate-600"></p>
+                        <button onclick="exportKualitiCandidatesCSV()"
+                            class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-bold flex items-center gap-1.5 shadow-sm"><i
+                                data-lucide="download" class="w-3.5 h-3.5"></i> Eksport CSV</button>
+                    </div>
                     <div class="overflow-x-auto"><table id="kual-cand" class="w-full text-xs"></table></div>
                     <p class="mt-3 text-[11px] text-slate-500">SPM (gred sahaja) dan ETR (sasaran) tidak disenaraikan kerana tiada markah sebenar untuk dikira jaraknya.</p>
                 </div>
@@ -2974,7 +2979,24 @@
         }
     }
 
+    // Rekod SPM lama: TH / gred tidak sah pernah disimpan sebagai markah 0 dalam DB.
+    // Selaraskan MARKAH dengan GRED semasa data dimuat supaya semua modul membaca TH sebagai TH.
+    const SPM_PROXY_FRONT = { 'A+': 95, 'A': 85, 'A-': 75, 'B+': 68, 'B': 63, 'C+': 58, 'C': 53, 'D': 48, 'E': 43, 'G': 20 };
+    function normalizeSpmRecords() {
+        if (!Array.isArray(GD.markah) || !GD.markah.length || typeof getFinalExamCode !== 'function' || !isSpmCohort()) return;
+        const finalUp = String(getFinalExamCode() || '').trim().toUpperCase();
+        GD.markah.forEach(m => {
+            if (String(m.KOD_EXAM || '').trim().toUpperCase() !== finalUp) return;
+            let g = String(m.GRED || '').trim().toUpperCase();
+            if (g === 'T' || g === '-') g = 'TH';
+            if (g === 'TH') { m.GRED = 'TH'; m.MARKAH = 'TH'; }
+            else if (Object.prototype.hasOwnProperty.call(SPM_PROXY_FRONT, g)) m.MARKAH = SPM_PROXY_FRONT[g];
+            else m.MARKAH = '';
+        });
+    }
+
     function ensureGDDefaults() {
+        normalizeSpmRecords();
         const safeTier = safeReadTierMode();
         const rawTier = parseInt(GD.tierMode, 10);
         GD.tierMode = (rawTier === 3 || rawTier === 4) ? rawTier : safeTier;
@@ -6076,7 +6098,14 @@
         GD.markah.forEach(m => {
             if (m.KOD_EXAM !== ex || !muridOk.has(String(m.NO_KP))) return;
             const grp = kompGroupOf(resolveSimulatedGrade(m, 0));
-            if (!grp) return; // TH / kosong / tidak sah
+            if (!grp) {
+                // TH: murid tidak layak Semua A bagi peperiksaan ini
+                if (parseMark(m.MARKAH).status === 'th') {
+                    const t = byStudent[m.NO_KP] = byStudent[m.NO_KP] || { n: 0, allA: true };
+                    t.hasTH = true;
+                }
+                return; // TH / kosong / tidak sah
+            }
             const s = m.KOD_SUBJEK;
             bySubj[s] = bySubj[s] || { total: 0 };
             bySubj[s][grp] = (bySubj[s][grp] || 0) + 1;
@@ -6098,12 +6127,12 @@
         if (empty) empty.classList.toggle('hidden', !noData);
         if (canvas) canvas.parentElement.classList.toggle('hidden', noData);
 
-        const students = Object.values(byStudent);
-        const allA = students.filter(s => s.allA).length;
+        const students = Object.values(byStudent).filter(s => s.n > 0);
+        const allA = students.filter(s => s.allA && !s.hasTH).length;
         const gps = calculateGPMPValue(kelas, 'ALL', ex, 0, ting);
         const scope = kelas !== 'ALL' ? kelas : (ting !== 'ALL' ? `Tingkatan ${ting}` : 'Semua murid');
         el('komp-title').innerText = `${ex} · GPS ${gps === null ? '–' : gps.toFixed(2)} · Semua A ${students.length ? ((allA / students.length) * 100).toFixed(2) : '0.00'}%`;
-        el('komp-subtitle').innerText = `${scope} · Semua A = murid yang mendapat A+, A atau A- dalam semua subjek yang ada gred`;
+        el('komp-subtitle').innerText = `${scope} · Semua A = murid yang mendapat A+, A atau A- dalam semua subjek, tanpa sebarang TH`;
         const allAPct = students.length ? (allA / students.length) * 100 : 0;
         el('komp-kpi-gps').innerText = gps === null ? '–' : gps.toFixed(2);
         el('komp-kpi-allapct').innerText = allAPct.toFixed(2) + '%';
@@ -6284,6 +6313,7 @@
         const maxGap = parseInt(val('kual-jarak'), 10) || 10;
         const kelas = val('kual-kelas') || 'ALL';
         const ting = el('kual-tingkatan') ? el('kual-tingkatan').value : 'ALL';
+        GD.__kualCand = null;
         if (!ex) { table.innerHTML = ''; summary.innerText = 'Tiada peperiksaan bermarkah untuk dianalisis.'; return; }
 
         const aMinObj = (GD.gredList || []).find(g => normalizeGradeToken(g.GRED) === 'A-');
@@ -6299,7 +6329,7 @@
                 const match = String(m.KELAS).match(/^(\d+)/);
                 ok = !!match && match[1] === ting;
             }
-            if (ok) murid[String(m.NO_KP)] = { nama: m.NAMA, kelas: m.KELAS, n: 0, a: 0, nonA: [] };
+            if (ok) murid[String(m.NO_KP)] = { nama: m.NAMA, kelas: m.KELAS, n: 0, a: 0, nonA: [], th: 0 };
         });
 
         GD.markah.forEach(m => {
@@ -6307,7 +6337,7 @@
             const st = murid[String(m.NO_KP)];
             if (!st) return;
             const mark = toNumericMarkah(m.MARKAH);
-            if (mark === null) return;
+            if (mark === null) { if (parseMark(m.MARKAH).status === 'th') st.th++; return; }
             const g = normalizeGradeToken(calcG(mark));
             st.n++;
             if (g === 'A+' || g === 'A' || g === 'A-') st.a++;
@@ -6320,7 +6350,8 @@
             const near = st.nonA.filter(x => x.gap <= maxGap).sort((p, q) => p.gap - q.gap);
             if (mode === 'FULL') {
                 // Kurang 1–2 A daripada semua A, dan setiap subjek bukan-A berada dalam jarak.
-                if (st.nonA.length < 1 || st.nonA.length > 2 || near.length !== st.nonA.length) return;
+                // Murid dengan TH tidak boleh mencapai semua A dalam peperiksaan ini.
+                if (st.th > 0 || st.nonA.length < 1 || st.nonA.length > 2 || near.length !== st.nonA.length) return;
                 rows.push({ ...st, target: near, total: near.reduce((t, x) => t + x.gap, 0) });
             } else {
                 if (st.a !== 0 || !near.length) return;
@@ -6328,6 +6359,7 @@
             }
         });
         rows.sort((p, q) => (p.total - q.total) || String(p.nama).localeCompare(String(q.nama)));
+        GD.__kualCand = { ex, mode, maxGap, rows };
 
         const label = mode === 'FULL' ? 'hampir semua A' : '0A yang hampir dapat A pertama';
         summary.innerText = `${ex}: ${rows.length} murid ${label} (jarak ≤ ${maxGap} markah ke A-, sempadan A- = ${aMin}).`;
@@ -6346,6 +6378,26 @@
             <td class="px-3 py-1.5">${r.target.map(t => `<span class="inline-block mr-2 mb-1 px-2 py-0.5 rounded bg-amber-50 border border-amber-200">${escapeCell(subjName[t.s] || t.s)} ${t.mark} <b class="text-amber-700">+${t.gap}</b></span>`).join('')}</td>
             <td class="px-3 py-1.5 text-center font-bold text-slate-700">${r.total}</td></tr>`).join('');
         table.innerHTML = head + `<tbody>${body}</tbody>`;
+    }
+
+    function exportKualitiCandidatesCSV() {
+        const st = GD.__kualCand;
+        if (!st || !st.rows.length) return alert('Tiada calon untuk dieksport.');
+        const senarai = st.mode === 'FULL' ? 'Hampir semua A' : '0A hampir A pertama';
+        const header = ['Bil', 'Nama', 'Kelas', 'Peperiksaan', 'Senarai', 'Bilangan A', 'Jumlah subjek', 'Subjek sasaran (markah, jarak ke A-)', st.mode === 'FULL' ? 'Jumlah jarak' : 'Jarak terdekat', 'Guru / tindakan', 'Tarikh semakan'];
+        const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+        const lines = [header.map(q).join(',')];
+        st.rows.forEach((r, i) => {
+            const target = r.target.map(t => t.s + ' ' + t.mark + ' (+' + t.gap + ')').join('; ');
+            lines.push([i + 1, r.nama, r.kelas, st.ex, senarai, r.a, r.n, target, r.total, '', ''].map(q).join(','));
+        });
+        const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'Calon_Hampir_Cemerlang_' + st.ex + '_' + (st.mode === 'FULL' ? 'SemuaA' : 'A1') + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 
     function normExamCode(ex) {
