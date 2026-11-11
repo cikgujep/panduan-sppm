@@ -1890,11 +1890,15 @@
                         <h3 class="font-bold text-slate-800 text-base">Taburan Normal vs Peperiksaan</h3>
                     </div>
                     <div class="h-[400px] w-full relative"><canvas id="chartNormal"></canvas></div>
-                    <p id="nm-spm-disclaimer"
-                        class="hidden mt-3 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-                        Nota: Graf normal SPM adalah berdasarkan jangkaan relatif markah dengan gred.
-                    </p>
                     <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4" id="nm-stats"></div>
+                    <div id="nm-spm-wrap" class="hidden mt-8 pt-6 border-t border-slate-200">
+                        <div class="flex flex-wrap justify-between items-baseline gap-2 mb-1">
+                            <h3 id="nm-spm-title" class="font-bold text-slate-800 text-base">Taburan Gred SPM</h3>
+                            <span id="nm-spm-summary" class="text-xs text-slate-500"></span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mb-4">SPM hanya mempunyai gred, jadi taburannya dipaparkan ikut gred dan tidak dibandingkan dengan lengkung markah di atas.</p>
+                        <div class="h-[300px] w-full relative"><canvas id="chartNormalSpm"></canvas></div>
+                    </div>
                 </div>
             </div>
 
@@ -3072,8 +3076,11 @@
             ve.innerHTML += opt; gapE.innerHTML += opt;
             if (normExam(x) !== getFinalExamCode().toUpperCase()) {
                 grE.innerHTML += opt;
-                gaBase.innerHTML += opt;
-                gaCur.innerHTML += opt;
+                // ETR ialah sasaran, bukan pencapaian: tidak sesuai sebagai baseline/semasa G-Action.
+                if (normExam(x) !== 'ETR') {
+                    gaBase.innerHTML += opt;
+                    gaCur.innerHTML += opt;
+                }
             }
             // Add OTR logic for Matrix dropdowns
             const nx = normExam(x);
@@ -3112,9 +3119,10 @@
         }
 
         const nonSpmExams = EXAM_ORD.filter(ex => normExam(ex) !== getFinalExamCode().toUpperCase());
-        const baseDefault = nonSpmExams[0] || EXAM_ORD[0] || '';
-        let curDefault = nonSpmExams[nonSpmExams.length - 1] || EXAM_ORD[EXAM_ORD.length - 1] || '';
-        if (baseDefault === curDefault && nonSpmExams.length > 1) curDefault = nonSpmExams[1];
+        const gaExams = nonSpmExams.filter(ex => normExam(ex) !== 'ETR');
+        const baseDefault = gaExams[0] || '';
+        let curDefault = gaExams[gaExams.length - 1] || '';
+        if (baseDefault === curDefault && gaExams.length > 1) curDefault = gaExams[1];
         if (gaBase && baseDefault) gaBase.value = baseDefault;
         if (gaCur && curDefault) gaCur.value = curDefault;
         if (grE && nonSpmExams.length > 0 && !Array.from(grE.options).some(opt => opt.value === grE.value)) {
@@ -5661,38 +5669,42 @@
         let datasets = [];
         let allMarksGlobal = [];
         let benchmarkMarks = [];
-        let hasSpmData = false;
+
+        const matchStudent = (m) => {
+            const stu = GD.murid.find(z => String(z.NO_KP) === String(m.NO_KP));
+            if (!stu) return false;
+            if (k !== 'ALL') return stu.KELAS === k;
+            if (nmTing !== 'ALL') {
+                const match = String(stu.KELAS).match(/^(\d+)/);
+                return !!match && match[1] === nmTing;
+            }
+            return true;
+        };
+
+        // SPM hanya ada gred: dipaparkan dalam carta gred berasingan, bukan dalam graf markah.
+        let spmInfo = null;
 
         EXAM_ORD.forEach((ex, idx) => {
-            const marks = GD.markah
-                .filter(m => {
-                    if (m.KOD_EXAM !== ex) return false;
-                    if (m.KOD_SUBJEK !== s) return false;
+            const isSpm = ex === getFinalExamCode() && isSpmCohort();
+            const recs = GD.markah.filter(m => m.KOD_EXAM === ex && m.KOD_SUBJEK === s && matchStudent(m));
 
-                    const stu = GD.murid.find(z => String(z.NO_KP) === String(m.NO_KP));
-                    if (!stu) return false;
+            if (isSpm) {
+                const counts = {};
+                recs.forEach(m => {
+                    const g = String(m.GRED || '').trim().toUpperCase();
+                    if (NM_SPM_GRADES.includes(g)) counts[g] = (counts[g] || 0) + 1;
+                });
+                spmInfo = { label: ex, counts, color: EXAM_COLORS[idx % EXAM_COLORS.length] };
+                return;
+            }
 
-                    if (k !== 'ALL') {
-                        if (stu.KELAS !== k) return false;
-                    } else if (nmTing !== 'ALL') {
-                        const match = stu.KELAS.match(/^(\d+)/);
-                        if (!match || match[1] !== nmTing) return false;
-                    }
-
-                    return true;
-                })
-                .map(x => toNumericMarkah(x.MARKAH))
-                .filter(v => v !== null);
-
+            const marks = recs.map(x => toNumericMarkah(x.MARKAH)).filter(v => v !== null);
             if (!marks.length) return;
 
             allMarksGlobal = [...allMarksGlobal, ...marks];
-            const finalCode = getFinalExamCode();
-            const isSpm = ex === finalCode && isSpmCohort();
             // ETR ialah target, bukan pencapaian: jangan masukkan dalam Benchmark.
             const isTarget = String(ex).trim().toUpperCase() === 'ETR';
-            if (!isSpm && !isTarget) benchmarkMarks = [...benchmarkMarks, ...marks];
-            if (isSpm) hasSpmData = true;
+            if (!isTarget) benchmarkMarks = [...benchmarkMarks, ...marks];
 
             const bins = new Array(11).fill(0);
             marks.forEach(v => {
@@ -5707,17 +5719,18 @@
                 borderColor: EXAM_COLORS[idx % EXAM_COLORS.length],
                 backgroundColor: EXAM_COLORS[idx % EXAM_COLORS.length] + '40',
                 borderWidth: 2,
-                tension: isSpm ? 0.25 : 0.4,
+                tension: 0.4,
                 borderDash: [],
-                pointRadius: isSpm ? 4 : 3,
-                fill: !isSpm
+                pointRadius: 3,
+                fill: true
             });
         });
 
+        renderSpmGradeChart(spmInfo);
+
         if (!allMarksGlobal.length) {
+            if (cN) { cN.destroy(); cN = null; }
             el('nm-stats').innerHTML = '<div class="col-span-3 text-center text-slate-400">Tiada Data Markah Normal</div>';
-            const spmDisclaimerEmpty = el('nm-spm-disclaimer');
-            if (spmDisclaimerEmpty) spmDisclaimerEmpty.classList.add('hidden');
             return;
         }
 
@@ -5788,14 +5801,63 @@
             }
         });
 
-        const spmDisclaimer = el('nm-spm-disclaimer');
-        if (spmDisclaimer) {
-            spmDisclaimer.classList.toggle('hidden', !hasSpmData);
-            const finalCode = getFinalExamCode();
-            spmDisclaimer.innerText = `Nota: Graf normal ${finalCode} adalah berdasarkan jangkaan relatif markah dengan gred.`;
-        }
-
         updateRealTimeStats(cN);
+    }
+
+    const NM_SPM_GRADES = ['A+', 'A', 'A-', 'B+', 'B', 'C+', 'C', 'D', 'E', 'G'];
+    let cNSpm = null;
+
+    function renderSpmGradeChart(info) {
+        const wrap = el('nm-spm-wrap');
+        if (!wrap) return;
+        const total = info ? NM_SPM_GRADES.reduce((a, g) => a + (info.counts[g] || 0), 0) : 0;
+        if (cNSpm) { cNSpm.destroy(); cNSpm = null; }
+        if (!total) { wrap.classList.add('hidden'); return; }
+
+        wrap.classList.remove('hidden');
+        const title = el('nm-spm-title');
+        if (title) title.innerText = `Taburan Gred ${info.label}`;
+        const lulus = total - (info.counts['G'] || 0);
+        const summary = el('nm-spm-summary');
+        if (summary) summary.innerText = `${total} murid · Lulus ${lulus} (${((lulus / total) * 100).toFixed(1)}%) · TH tidak dikira`;
+
+        const data = NM_SPM_GRADES.map(g => info.counts[g] || 0);
+        cNSpm = new Chart(el('chartNormalSpm').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: NM_SPM_GRADES,
+                datasets: [{
+                    label: info.label,
+                    data,
+                    backgroundColor: NM_SPM_GRADES.map(g => g === 'G' ? '#f43f5e' : info.color + 'cc'),
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'Bil. Murid' } },
+                    x: { title: { display: true, text: 'Gred' } }
+                },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+                        anchor: 'end',
+                        align: 'end',
+                        offset: 2,
+                        color: '#475569',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: v => `${v} (${((v / total) * 100).toFixed(0)}%)`
+                    },
+                    tooltip: {
+                        callbacks: { label: c => `${c.parsed.y} murid (${((c.parsed.y / total) * 100).toFixed(1)}%)` }
+                    }
+                },
+                layout: { padding: { top: 18 } }
+            }
+        });
     }
 
     function updateRealTimeStats(chart) {

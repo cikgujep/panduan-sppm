@@ -70,11 +70,24 @@ function normalizeGrade(grade) {
   return String(grade || "").trim().toUpperCase();
 }
 
+// Gred SPM: 'T' dan '-' dianggap TH.
+function normalizeSpmGrade(grade) {
+  const g = normalizeGrade(grade);
+  return (g === 'T' || g === '-') ? 'TH' : g;
+}
+
+function isValidSpmGrade(grade) {
+  return Object.prototype.hasOwnProperty.call(SPM_PROXY_MARK_MAP, normalizeSpmGrade(grade));
+}
+
+// TH disimpan sebagai 'TH' (bukan 0) supaya tidak dikira dalam purata/taburan,
+// sama seperti peperiksaan lain. Gred tidak dikenali -> '' (tiada markah).
 function getSpmProxyMark(grade) {
-  const normalized = normalizeGrade(grade);
+  const normalized = normalizeSpmGrade(grade);
+  if (normalized === 'TH') return 'TH';
   return Object.prototype.hasOwnProperty.call(SPM_PROXY_MARK_MAP, normalized)
     ? SPM_PROXY_MARK_MAP[normalized]
-    : 0;
+    : '';
 }
 
 function getFinalExamCodeBackend(ss) {
@@ -590,7 +603,8 @@ function saveBulkMarks(data) {
       const key = `${kp}_${d.subjek}_${d.exam}`;
       const examCode = String(d.exam || "").trim().toUpperCase();
       const isSpm = (examCode === finalCode) && isSpmCohort;
-      let gred = isSpm ? normalizeGrade(d.gred) : d.gred;
+      let gred = isSpm ? normalizeSpmGrade(d.gred) : d.gred;
+      if (isSpm && gred && !isValidSpmGrade(gred)) { ditolak.push(`${kp} ${d.subjek} ${d.exam}: gred "${d.gred}"`); return; }
       let markah = isSpm ? (gred ? getSpmProxyMark(gred) : "") : d.markah;
 
       // Sahkan markah bukan-SPM: nombor 0-100, TH, atau kosong. Nilai lain ditolak (tidak disimpan).
@@ -617,7 +631,7 @@ function saveBulkMarks(data) {
     });
 
     if (ditolak.length) {
-      return `Data disimpan, tetapi ${ditolak.length} markah tidak sah ditolak (mesti nombor 0-100 atau TH): ` + ditolak.slice(0, 5).join('; ') + (ditolak.length > 5 ? ' ...' : '');
+      return `Data disimpan, tetapi ${ditolak.length} markah tidak sah ditolak (mesti nombor 0-100, TH, atau gred SPM yang sah): ` + ditolak.slice(0, 5).join('; ') + (ditolak.length > 5 ? ' ...' : '');
     }
     return "Data berjaya disimpan!";
   } catch (e) {
@@ -1168,7 +1182,13 @@ function processExamImport(payload) {
 
             // Logic Data (disahkan DULU, sebelum apa-apa ditulis)
             if (examCode === finalExamCode) {
-              gred = normalizeGrade(val);
+              gred = normalizeSpmGrade(val);
+              if (!isValidSpmGrade(gred)) {
+                // Sebelum ini gred tidak dikenali disimpan sebagai markah 0. Kini dilangkau dan dilaporkan.
+                countInvalid++;
+                if (invalidSamples.length < 5) invalidSamples.push(`${kp} ${subCode}: gred "${val}"`);
+                continue;
+              }
               markah = getSpmProxyMark(gred);
             } else {
               const normVal = String(val).trim().toUpperCase();
@@ -1260,7 +1280,7 @@ function processExamImport(payload) {
       successMsg += ` ${countMuridUpdate} murid didaftarkan subjek baru secara automatik.`;
     }
     if (countInvalid > 0) {
-      successMsg += ` ${countInvalid} nilai tidak sah dilangkau (mesti nombor 0-100 atau TH): ${invalidSamples.join('; ')}${countInvalid > invalidSamples.length ? ' ...' : ''}`;
+      successMsg += ` ${countInvalid} nilai tidak sah dilangkau (mesti nombor 0-100, TH, atau gred SPM yang sah): ${invalidSamples.join('; ')}${countInvalid > invalidSamples.length ? ' ...' : ''}`;
     }
 
     return {
@@ -1429,4 +1449,4 @@ function sanitizeForJson(val) {
   return val;
 }
 
-;return {setClientDb,getDB,parseMarkValue,normalizeGrade,getSpmProxyMark,getFinalExamCodeBackend,isSpmCohortBackend,normalizeSetupKey,parseSetupSheetRows,validateSchoolCode,normalizeMuridHeader,getMuridRowValue,normalizeNoKp,isSameNoKp,normalizeGenderToken,normalizeSESToken,buildMuridColumnMap,getMuridSheetContext,createMuridAppendRow,doGetLibrary,getInitialData,getDashboardData,saveStudent,saveStudentsBatch,saveGred,saveSubjects,saveExams,updateExamLogic,saveBulkMarks,saveMapping,saveStudentVAK,saveStudentSES,saveSystemSetup,deleteStudent,deleteClass,deleteSubject,deleteExam,updateExam,deleteExamMarks,deleteGred,deleteRowByCol,processExamImport,include,getStrategicContribution,uploadProfileImage,getProfileImageBase64,repairStudentIds,sanitizeForJson};})();
+;return {setClientDb,getDB,parseMarkValue,normalizeGrade,normalizeSpmGrade,isValidSpmGrade,getSpmProxyMark,getFinalExamCodeBackend,isSpmCohortBackend,normalizeSetupKey,parseSetupSheetRows,validateSchoolCode,normalizeMuridHeader,getMuridRowValue,normalizeNoKp,isSameNoKp,normalizeGenderToken,normalizeSESToken,buildMuridColumnMap,getMuridSheetContext,createMuridAppendRow,doGetLibrary,getInitialData,getDashboardData,saveStudent,saveStudentsBatch,saveGred,saveSubjects,saveExams,updateExamLogic,saveBulkMarks,saveMapping,saveStudentVAK,saveStudentSES,saveSystemSetup,deleteStudent,deleteClass,deleteSubject,deleteExam,updateExam,deleteExamMarks,deleteGred,deleteRowByCol,processExamImport,include,getStrategicContribution,uploadProfileImage,getProfileImageBase64,repairStudentIds,sanitizeForJson};})();
