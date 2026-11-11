@@ -1399,6 +1399,10 @@
                             class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
                             <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Komposisi Gred
                         </button>
+                        <button onclick="switchTab('kualiti')" id="tab-kualiti"
+                            class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
+                            <i data-lucide="award" class="w-4 h-4"></i> Kualiti Calon
+                        </button>
                         <button onclick="switchTab('grisk')" id="tab-grisk"
                             class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
                             <i data-lucide="shield-alert" class="w-4 h-4"></i> Analisis Risiko (G-Risk)
@@ -2270,6 +2274,34 @@
                 </div>
             </div>
 
+            <div id="view-kualiti" class="hidden space-y-6 max-w-7xl mx-auto h-full flex flex-col">
+                <div class="glass-panel p-6 rounded-xl">
+                    <div class="flex flex-col md:flex-row gap-4 items-end">
+                        <div class="w-full md:w-48"><label class="text-xs font-bold text-slate-500 mb-1.5 block">Pilih
+                                Tahun/Tingkatan</label><select id="kual-tingkatan" class="input-glass"
+                                onchange="filterDropdownKelas('kual-tingkatan', 'kual-kelas'); genKualitiCalon()">
+                                <option value="ALL">Semua</option>
+                            </select></div>
+                        <div class="w-full md:w-48"><label class="text-xs font-bold text-slate-500 mb-1.5 block">Pilih
+                                Kelas</label><select id="kual-kelas" class="input-glass" onchange="genKualitiCalon()">
+                                <option value="ALL">Semua Kelas</option>
+                            </select></div>
+                    </div>
+                </div>
+                <div class="glass-panel p-6 rounded-xl shadow-lg">
+                    <div class="text-center mb-4">
+                        <h3 class="font-bold text-slate-800 text-lg">Perbandingan Kualiti Calon</h3>
+                        <p id="kual-subtitle" class="text-xs text-slate-500 mt-1"></p>
+                    </div>
+                    <div class="flex flex-col lg:flex-row gap-6 items-start">
+                        <div class="w-full lg:flex-1 h-[440px] relative"><canvas id="chartKualiti"></canvas></div>
+                        <div class="w-full lg:w-auto overflow-x-auto"><table id="kual-table" class="text-xs border-collapse mx-auto"></table></div>
+                    </div>
+                    <p id="kual-empty" class="hidden text-center text-slate-400 py-10">Tiada data gred untuk pilihan ini.</p>
+                    <p class="mt-4 text-[11px] text-slate-500">Bilangan A = bilangan subjek bergred A+, A atau A- bagi setiap murid. Paksi menegak = % murid yang ada gred dalam peperiksaan itu (TH tidak dikira); lalukan tetikus untuk bilangan murid. Markah peperiksaan selain SPM ditukar kepada gred ikut jadual gred sekolah. ETR (garisan putus-putus) ialah sasaran.</p>
+                </div>
+            </div>
+
             <div id="view-rumusan" class="hidden space-y-6 max-w-7xl mx-auto h-full flex flex-col">
                 <div class="glass-panel p-6 rounded-xl z-30 relative shadow-sm">
                     <div class="flex flex-col md:flex-row gap-4 items-end">
@@ -3080,7 +3112,7 @@
             'dash-filter-tingkatan', 'vark-tingkatan', 'ps-tingkatan', 'mx-tingkatan',
             'nm-tingkatan', 'gap-tingkatan', 'sum-b-tingkatan', 'gpmp-tingkatan',
             'gred-tingkatan', 'rm-tingkatan', 'ls-tingkatan', 'grisk-filter-tingkatan',
-            'gaction-filter-tingkatan', 'komp-tingkatan'
+            'gaction-filter-tingkatan', 'komp-tingkatan', 'kual-tingkatan'
         ];
 
         tkIds.forEach(id => {
@@ -3101,6 +3133,7 @@
             rmK.innerHTML += opt; nmK.innerHTML += opt; gapK.innerHTML += opt;
             sumBK.innerHTML += opt; vk.innerHTML += opt; grK.innerHTML += opt; gaK.innerHTML += opt;
             if (el('komp-kelas')) el('komp-kelas').innerHTML += opt;
+            if (el('kual-kelas')) el('kual-kelas').innerHTML += opt;
         });
 
         // Komposisi Gred: semua peperiksaan; default SPM jika ada data, jika tidak peperiksaan pencapaian terakhir.
@@ -6106,6 +6139,114 @@
         });
     }
 
+    // --- KUALITI CALON (taburan bilangan A setiap murid, ikut peperiksaan) ---
+    let cKual = null;
+
+    function genKualitiCalon() {
+        const kelas = val('kual-kelas') || 'ALL';
+        const ting = el('kual-tingkatan') ? el('kual-tingkatan').value : 'ALL';
+
+        const muridOk = new Set();
+        GD.murid.forEach(m => {
+            let ok = true;
+            if (kelas !== 'ALL') ok = String(m.KELAS) === String(kelas);
+            else if (ting !== 'ALL') {
+                const match = String(m.KELAS).match(/^(\d+)/);
+                ok = !!match && match[1] === ting;
+            }
+            if (ok) muridOk.add(String(m.NO_KP));
+        });
+
+        // exam -> no_kp -> {n: subjek bergred, a: bilangan A}
+        const per = {};
+        GD.markah.forEach(m => {
+            if (!muridOk.has(String(m.NO_KP))) return;
+            const g = normalizeGradeToken(resolveSimulatedGrade(m, 0));
+            if (!g || g === 'TH' || g === '-') return;
+            const ex = m.KOD_EXAM;
+            per[ex] = per[ex] || {};
+            const st = per[ex][m.NO_KP] = per[ex][m.NO_KP] || { n: 0, a: 0 };
+            st.n++;
+            if (g === 'A+' || g === 'A' || g === 'A-') st.a++;
+        });
+
+        const exams = EXAM_ORD.filter(ex => per[ex] && Object.keys(per[ex]).length);
+        if (cKual) { cKual.destroy(); cKual = null; }
+        const canvas = el('chartKualiti');
+        const table = el('kual-table');
+        const empty = el('kual-empty');
+        if (empty) empty.classList.toggle('hidden', exams.length > 0);
+        canvas.parentElement.classList.toggle('hidden', !exams.length);
+        if (!exams.length) { table.innerHTML = ''; el('kual-subtitle').innerText = ''; return; }
+
+        let maxA = 0;
+        exams.forEach(ex => Object.values(per[ex]).forEach(s => { maxA = Math.max(maxA, s.n); }));
+        const buckets = [];
+        for (let k = maxA; k >= 0; k--) buckets.push(k);
+
+        const stats = exams.map((ex, i) => {
+            const list = Object.values(per[ex]);
+            const counts = buckets.map(k => list.filter(s => s.a === k).length);
+            const color = EXAM_COLORS[EXAM_ORD.indexOf(ex) % EXAM_COLORS.length];
+            return { ex, total: list.length, counts, color };
+        });
+
+        const scope = kelas !== 'ALL' ? kelas : (ting !== 'ALL' ? `Tingkatan ${ting}` : 'Semua murid');
+        el('kual-subtitle').innerText = `${scope} · ${exams.join(', ')}`;
+
+        cKual = new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: buckets.map(k => `${k}A`),
+                datasets: stats.map(s => {
+                    const isTarget = normExamCode(s.ex) === 'ETR';
+                    const isFinal = normExamCode(s.ex) === getFinalExamCode().toUpperCase();
+                    return {
+                        label: s.ex,
+                        data: s.counts.map(c => +(c / s.total * 100).toFixed(1)),
+                        _counts: s.counts,
+                        _total: s.total,
+                        borderColor: s.color,
+                        backgroundColor: s.color,
+                        borderWidth: isFinal ? 3 : 2,
+                        borderDash: isTarget ? [6, 5] : [],
+                        pointRadius: 3,
+                        tension: 0.35,
+                        fill: false
+                    };
+                })
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: v => v + '%' }, title: { display: true, text: '% Murid' } },
+                    x: { title: { display: true, text: 'Bilangan A' } }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    datalabels: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: c => `${c.dataset.label}: ${c.dataset._counts[c.dataIndex]} murid (${c.parsed.y}%)`
+                        }
+                    }
+                }
+            }
+        });
+
+        // Jadual bilangan murid (seperti slaid perbandingan)
+        const th = stats.map(s => `<th class="px-3 py-2 text-white font-bold text-center" style="background:${s.color}">${escapeCell(s.ex)}</th>`).join('');
+        const rows = buckets.map((k, bi) => `<tr><td class="px-3 py-1.5 font-bold text-slate-700 text-right">${k}A</td>${stats.map(s => `<td class="px-3 py-1.5 text-center font-semibold" style="background:${s.color}1f">${s.counts[bi]}</td>`).join('')}</tr>`).join('');
+        const foot = `<tr class="border-t-2 border-slate-300"><td class="px-3 py-1.5 font-bold text-slate-500 text-right">Jumlah</td>${stats.map(s => `<td class="px-3 py-1.5 text-center font-bold text-slate-600">${s.total}</td>`).join('')}</tr>`;
+        table.innerHTML = `<thead><tr><th class="px-3 py-2 bg-slate-800 text-white"></th>${th}</tr></thead><tbody>${rows}${foot}</tbody>`;
+    }
+
+    function normExamCode(ex) {
+        return String(ex || '').trim().toUpperCase().replace(/\s+/g, '');
+    }
+
     // --- 7. G-RISK & G-ACTION ---
     function escapeCell(v) {
         return String(v ?? '')
@@ -7580,6 +7721,7 @@
         if (t === 'gpmp') genTableGPMP();
         if (t === 'gred') genTableGred();
         if (t === 'komposisi') genKomposisi();
+        if (t === 'kualiti') genKualitiCalon();
         if (t === 'list') genList();
         if (t === 'normal') genNormalGraph();
         if (t === 'jurang') genGapAnalysis();
