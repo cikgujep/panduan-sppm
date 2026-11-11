@@ -1399,10 +1399,6 @@
                             class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
                             <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Komposisi Gred
                         </button>
-                        <button onclick="switchTab('kualiti')" id="tab-kualiti"
-                            class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
-                            <i data-lucide="award" class="w-4 h-4"></i> Kualiti Calon
-                        </button>
                         <button onclick="switchTab('grisk')" id="tab-grisk"
                             class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
                             <i data-lucide="shield-alert" class="w-4 h-4"></i> Analisis Risiko (G-Risk)
@@ -1436,6 +1432,10 @@
                         <button onclick="switchTab('gaction')" id="tab-gaction"
                             class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
                             <i data-lucide="list-checks" class="w-4 h-4"></i> Tindakan Berperingkat (G-Action)
+                        </button>
+                        <button onclick="switchTab('kualiti')" id="tab-kualiti"
+                            class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
+                            <i data-lucide="award" class="w-4 h-4"></i> Kualiti Calon
                         </button>
                     </div>
                 </div>
@@ -2299,6 +2299,27 @@
                     </div>
                     <p id="kual-empty" class="hidden text-center text-slate-400 py-10">Tiada data gred untuk pilihan ini.</p>
                     <p class="mt-4 text-[11px] text-slate-500">Bilangan A = bilangan subjek bergred A+, A atau A- bagi setiap murid. Paksi menegak = % murid yang ada gred dalam peperiksaan itu (TH tidak dikira); lalukan tetikus untuk bilangan murid. Markah peperiksaan selain SPM ditukar kepada gred ikut jadual gred sekolah. ETR (garisan putus-putus) ialah sasaran.</p>
+                </div>
+                <div class="glass-panel p-6 rounded-xl shadow-lg">
+                    <div class="flex flex-col md:flex-row md:items-end gap-4 mb-4">
+                        <div class="md:flex-1">
+                            <h3 class="font-bold text-slate-800 text-base">Calon Hampir Cemerlang</h3>
+                            <p class="text-xs text-slate-500 mt-1">Murid yang paling dekat untuk menambah A. Jarak = markah yang perlu untuk mencapai sempadan A- (ikut jadual gred sekolah).</p>
+                        </div>
+                        <div class="w-full md:w-40"><label class="text-xs font-bold text-slate-500 mb-1.5 block">Peperiksaan</label><select id="kual-exam" class="input-glass" onchange="genKualitiCandidates()"></select></div>
+                        <div class="w-full md:w-72"><label class="text-xs font-bold text-slate-500 mb-1.5 block">Senarai</label><select id="kual-list" class="input-glass" onchange="genKualitiCandidates()">
+                                <option value="FULL">Hampir semua A (kurang 1–2 A)</option>
+                                <option value="FIRST">0A, hampir dapat A pertama</option>
+                            </select></div>
+                        <div class="w-full md:w-32"><label class="text-xs font-bold text-slate-500 mb-1.5 block">Jarak maks.</label><select id="kual-jarak" class="input-glass" onchange="genKualitiCandidates()">
+                                <option value="5">5 markah</option>
+                                <option value="10" selected>10 markah</option>
+                                <option value="15">15 markah</option>
+                            </select></div>
+                    </div>
+                    <p id="kual-cand-summary" class="text-xs font-semibold text-slate-600 mb-3"></p>
+                    <div class="overflow-x-auto"><table id="kual-cand" class="w-full text-xs"></table></div>
+                    <p class="mt-3 text-[11px] text-slate-500">SPM (gred sahaja) dan ETR (sasaran) tidak disenaraikan kerana tiada markah sebenar untuk dikira jaraknya.</p>
                 </div>
             </div>
 
@@ -6241,6 +6262,90 @@
         const rows = buckets.map((k, bi) => `<tr><td class="px-3 py-1.5 font-bold text-slate-700 text-right">${k}A</td>${stats.map(s => `<td class="px-3 py-1.5 text-center font-semibold" style="background:${s.color}1f">${s.counts[bi]}</td>`).join('')}</tr>`).join('');
         const foot = `<tr class="border-t-2 border-slate-300"><td class="px-3 py-1.5 font-bold text-slate-500 text-right">Jumlah</td>${stats.map(s => `<td class="px-3 py-1.5 text-center font-bold text-slate-600">${s.total}</td>`).join('')}</tr>`;
         table.innerHTML = `<thead><tr><th class="px-3 py-2 bg-slate-800 text-white"></th>${th}</tr></thead><tbody>${rows}${foot}</tbody>`;
+
+        // Isi pilihan peperiksaan untuk senarai calon (peperiksaan bermarkah sahaja)
+        const exSel = el('kual-exam');
+        if (exSel) {
+            const prev = exSel.value;
+            const finalUp = getFinalExamCode().toUpperCase();
+            const opts = exams.filter(ex => normExamCode(ex) !== 'ETR' && !(normExamCode(ex) === finalUp && isSpmCohort()));
+            exSel.innerHTML = opts.map(ex => `<option value="${ex}">${ex}</option>`).join('');
+            exSel.value = opts.includes(prev) ? prev : (opts[opts.length - 1] || '');
+        }
+        genKualitiCandidates();
+    }
+
+    function genKualitiCandidates() {
+        const table = el('kual-cand');
+        const summary = el('kual-cand-summary');
+        if (!table) return;
+        const ex = val('kual-exam');
+        const mode = val('kual-list') || 'FULL';
+        const maxGap = parseInt(val('kual-jarak'), 10) || 10;
+        const kelas = val('kual-kelas') || 'ALL';
+        const ting = el('kual-tingkatan') ? el('kual-tingkatan').value : 'ALL';
+        if (!ex) { table.innerHTML = ''; summary.innerText = 'Tiada peperiksaan bermarkah untuk dianalisis.'; return; }
+
+        const aMinObj = (GD.gredList || []).find(g => normalizeGradeToken(g.GRED) === 'A-');
+        const aMin = aMinObj ? parseFloat(aMinObj.MIN) : 70;
+        const subjName = {};
+        GD.subjek.forEach(x => { subjName[x.SINGKATAN] = x.SINGKATAN; });
+
+        const murid = {};
+        GD.murid.forEach(m => {
+            let ok = true;
+            if (kelas !== 'ALL') ok = String(m.KELAS) === String(kelas);
+            else if (ting !== 'ALL') {
+                const match = String(m.KELAS).match(/^(\d+)/);
+                ok = !!match && match[1] === ting;
+            }
+            if (ok) murid[String(m.NO_KP)] = { nama: m.NAMA, kelas: m.KELAS, n: 0, a: 0, nonA: [] };
+        });
+
+        GD.markah.forEach(m => {
+            if (m.KOD_EXAM !== ex) return;
+            const st = murid[String(m.NO_KP)];
+            if (!st) return;
+            const mark = toNumericMarkah(m.MARKAH);
+            if (mark === null) return;
+            const g = normalizeGradeToken(calcG(mark));
+            st.n++;
+            if (g === 'A+' || g === 'A' || g === 'A-') st.a++;
+            else st.nonA.push({ s: m.KOD_SUBJEK, mark, gap: Math.max(0, Math.ceil(aMin - mark)) });
+        });
+
+        let rows = [];
+        Object.values(murid).forEach(st => {
+            if (!st.n) return;
+            const near = st.nonA.filter(x => x.gap <= maxGap).sort((p, q) => p.gap - q.gap);
+            if (mode === 'FULL') {
+                // Kurang 1–2 A daripada semua A, dan setiap subjek bukan-A berada dalam jarak.
+                if (st.nonA.length < 1 || st.nonA.length > 2 || near.length !== st.nonA.length) return;
+                rows.push({ ...st, target: near, total: near.reduce((t, x) => t + x.gap, 0) });
+            } else {
+                if (st.a !== 0 || !near.length) return;
+                rows.push({ ...st, target: near.slice(0, 3), total: near[0].gap });
+            }
+        });
+        rows.sort((p, q) => (p.total - q.total) || String(p.nama).localeCompare(String(q.nama)));
+
+        const label = mode === 'FULL' ? 'hampir semua A' : '0A yang hampir dapat A pertama';
+        summary.innerText = `${ex}: ${rows.length} murid ${label} (jarak ≤ ${maxGap} markah ke A-, sempadan A- = ${aMin}).`;
+        if (!rows.length) { table.innerHTML = '<tbody><tr><td class="text-center text-slate-400 py-6">Tiada murid untuk kriteria ini.</td></tr></tbody>'; return; }
+
+        const head = `<thead><tr class="bg-slate-100 text-slate-600 text-left">
+            <th class="px-3 py-2">#</th><th class="px-3 py-2">Nama</th><th class="px-3 py-2">Kelas</th>
+            <th class="px-3 py-2 text-center">A sekarang</th>
+            <th class="px-3 py-2">${mode === 'FULL' ? 'Subjek belum A (markah, jarak)' : 'Subjek paling hampir A (markah, jarak)'}</th>
+            <th class="px-3 py-2 text-center">${mode === 'FULL' ? 'Jumlah jarak' : 'Jarak terdekat'}</th></tr></thead>`;
+        const body = rows.map((r, i) => `<tr class="border-b border-slate-100">
+            <td class="px-3 py-1.5 text-slate-400">${i + 1}</td>
+            <td class="px-3 py-1.5 font-semibold text-slate-700">${escapeCell(r.nama)}</td>
+            <td class="px-3 py-1.5">${escapeCell(r.kelas)}</td>
+            <td class="px-3 py-1.5 text-center">${r.a}/${r.n}</td>
+            <td class="px-3 py-1.5">${r.target.map(t => `<span class="inline-block mr-2 mb-1 px-2 py-0.5 rounded bg-amber-50 border border-amber-200">${escapeCell(subjName[t.s] || t.s)} ${t.mark} <b class="text-amber-700">+${t.gap}</b></span>`).join('')}</td>
+            <td class="px-3 py-1.5 text-center font-bold text-slate-700">${r.total}</td></tr>`).join('');
+        table.innerHTML = head + `<tbody>${body}</tbody>`;
     }
 
     function normExamCode(ex) {
