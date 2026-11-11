@@ -1395,6 +1395,10 @@
                             class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
                             <i data-lucide="layers" class="w-4 h-4"></i> Analisis Gred
                         </button>
+                        <button onclick="switchTab('komposisi')" id="tab-komposisi"
+                            class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Komposisi Gred
+                        </button>
                         <button onclick="switchTab('grisk')" id="tab-grisk"
                             class="dropdown-item w-full text-left px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand rounded-md flex items-center gap-2">
                             <i data-lucide="shield-alert" class="w-4 h-4"></i> Analisis Risiko (G-Risk)
@@ -2228,6 +2232,44 @@
                 </div>
             </div>
 
+            <div id="view-komposisi" class="hidden space-y-6 max-w-7xl mx-auto h-full flex flex-col">
+                <div class="glass-panel p-6 rounded-xl">
+                    <div class="flex flex-col md:flex-row gap-4 items-end">
+                        <div class="w-full md:w-48"><label class="text-xs font-bold text-slate-500 mb-1.5 block">Pilih
+                                Tahun/Tingkatan</label><select id="komp-tingkatan" class="input-glass"
+                                onchange="filterDropdownKelas('komp-tingkatan', 'komp-kelas'); genKomposisi()">
+                                <option value="ALL">Semua</option>
+                            </select></div>
+                        <div class="w-full md:w-48"><label class="text-xs font-bold text-slate-500 mb-1.5 block">Pilih
+                                Kelas</label><select id="komp-kelas" class="input-glass" onchange="genKomposisi()">
+                                <option value="ALL">Semua Kelas</option>
+                            </select></div>
+                        <div class="w-full md:w-48"><label class="text-xs font-bold text-slate-500 mb-1.5 block">Pilih
+                                Peperiksaan</label><select id="komp-exam" class="input-glass"
+                                onchange="genKomposisi()"></select></div>
+                        <div class="w-full md:w-48"><label class="text-xs font-bold text-slate-500 mb-1.5 block">Susunan
+                                Subjek</label><select id="komp-sort" class="input-glass" onchange="genKomposisi()">
+                                <option value="LIST">Ikut senarai subjek</option>
+                                <option value="A">% A tertinggi</option>
+                                <option value="G">% G tertinggi</option>
+                            </select></div>
+                    </div>
+                </div>
+                <div class="glass-panel p-6 rounded-xl shadow-lg">
+                    <div class="text-center mb-4">
+                        <h3 id="komp-title" class="font-bold text-slate-800 text-lg">Komposisi Gred</h3>
+                        <p id="komp-subtitle" class="text-xs text-slate-500 mt-1"></p>
+                    </div>
+                    <div class="flex justify-center gap-3 mb-4">
+                        <div class="px-4 py-1.5 bg-white border rounded-lg shadow-sm flex items-baseline gap-2"><span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">GPS</span><span id="komp-kpi-gps" class="text-base font-bold text-indigo-600">–</span></div>
+                        <div class="px-4 py-1.5 bg-white border rounded-lg shadow-sm flex items-baseline gap-2"><span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">% Semua A</span><span id="komp-kpi-allapct" class="text-base font-bold text-emerald-700">–</span></div>
+                    </div>
+                    <div class="h-[460px] w-full relative"><canvas id="chartKomposisi"></canvas></div>
+                    <p id="komp-empty" class="hidden text-center text-slate-400 py-10">Tiada data gred untuk pilihan ini.</p>
+                    <p class="mt-4 text-[11px] text-slate-500">Setiap bar = 100% murid yang mempunyai gred dalam subjek itu (TH tidak dikira). A = A+, A, A-; B = B+, B; C = C+, C. Markah peperiksaan selain SPM ditukar kepada gred ikut jadual gred sekolah. Klik bar untuk buka Analisis Gred subjek tersebut.</p>
+                </div>
+            </div>
+
             <div id="view-rumusan" class="hidden space-y-6 max-w-7xl mx-auto h-full flex flex-col">
                 <div class="glass-panel p-6 rounded-xl z-30 relative shadow-sm">
                     <div class="flex flex-col md:flex-row gap-4 items-end">
@@ -3038,7 +3080,7 @@
             'dash-filter-tingkatan', 'vark-tingkatan', 'ps-tingkatan', 'mx-tingkatan',
             'nm-tingkatan', 'gap-tingkatan', 'sum-b-tingkatan', 'gpmp-tingkatan',
             'gred-tingkatan', 'rm-tingkatan', 'ls-tingkatan', 'grisk-filter-tingkatan',
-            'gaction-filter-tingkatan'
+            'gaction-filter-tingkatan', 'komp-tingkatan'
         ];
 
         tkIds.forEach(id => {
@@ -3058,7 +3100,18 @@
             gpmpK.innerHTML += opt; gredK.innerHTML += opt; lsK.innerHTML += opt;
             rmK.innerHTML += opt; nmK.innerHTML += opt; gapK.innerHTML += opt;
             sumBK.innerHTML += opt; vk.innerHTML += opt; grK.innerHTML += opt; gaK.innerHTML += opt;
+            if (el('komp-kelas')) el('komp-kelas').innerHTML += opt;
         });
+
+        // Komposisi Gred: semua peperiksaan; default SPM jika ada data, jika tidak peperiksaan pencapaian terakhir.
+        const kompE = el('komp-exam');
+        if (kompE) {
+            kompE.innerHTML = EXAM_ORD.map(x => `<option value="${x}">${x}</option>`).join('');
+            const finalUp = getFinalExamCode().toUpperCase();
+            const hasFinal = GD.markah.some(m => String(m.KOD_EXAM).toUpperCase() === finalUp);
+            const actual = EXAM_ORD.filter(x => normExam(x) !== 'ETR' && normExam(x) !== finalUp);
+            kompE.value = hasFinal ? EXAM_ORD.find(x => normExam(x) === finalUp) : (actual[actual.length - 1] || EXAM_ORD[0] || '');
+        }
 
         GD.subjek.forEach(x => {
             const opt = `<option value="${x.SINGKATAN}">${x.NAMA}</option>`;
@@ -5929,6 +5982,130 @@
         el('nm-stats').innerHTML = statHTML;
     }
 
+    // --- KOMPOSISI GRED (carta bertindan 100% semua subjek) ---
+    const KOMP_GROUPS = [
+        { key: 'A', grades: ['A+', 'A', 'A-'], color: '#166534' },
+        { key: 'B', grades: ['B+', 'B'], color: '#22c55e' },
+        { key: 'C', grades: ['C+', 'C'], color: '#facc15' },
+        { key: 'D', grades: ['D'], color: '#fb923c' },
+        { key: 'E', grades: ['E'], color: '#ea580c' },
+        { key: 'G', grades: ['G'], color: '#dc2626' }
+    ];
+    let cKomp = null;
+
+    function kompGroupOf(grade) {
+        const g = normalizeGradeToken(grade);
+        const grp = KOMP_GROUPS.find(x => x.grades.includes(g));
+        return grp ? grp.key : null;
+    }
+
+    function genKomposisi() {
+        const ex = val('komp-exam');
+        const kelas = val('komp-kelas') || 'ALL';
+        const ting = el('komp-tingkatan') ? el('komp-tingkatan').value : 'ALL';
+        const sortMode = val('komp-sort') || 'LIST';
+        if (!ex) return;
+
+        const muridOk = new Map();
+        GD.murid.forEach(m => {
+            let ok = true;
+            if (kelas !== 'ALL') ok = String(m.KELAS) === String(kelas);
+            else if (ting !== 'ALL') {
+                const match = String(m.KELAS).match(/^(\d+)/);
+                ok = !!match && match[1] === ting;
+            }
+            if (ok) muridOk.set(String(m.NO_KP), true);
+        });
+
+        const bySubj = {};   // subjek -> {A: n, ...}
+        const byStudent = {}; // no_kp -> {n, allA}
+        GD.markah.forEach(m => {
+            if (m.KOD_EXAM !== ex || !muridOk.has(String(m.NO_KP))) return;
+            const grp = kompGroupOf(resolveSimulatedGrade(m, 0));
+            if (!grp) return; // TH / kosong / tidak sah
+            const s = m.KOD_SUBJEK;
+            bySubj[s] = bySubj[s] || { total: 0 };
+            bySubj[s][grp] = (bySubj[s][grp] || 0) + 1;
+            bySubj[s].total++;
+            const st = byStudent[m.NO_KP] = byStudent[m.NO_KP] || { n: 0, allA: true };
+            st.n++;
+            if (grp !== 'A') st.allA = false;
+        });
+
+        let subjects = GD.subjek.map(x => ({ code: x.SINGKATAN, name: x.NAMA })).filter(x => bySubj[x.code]);
+        const pct = (code, key) => (bySubj[code][key] || 0) / bySubj[code].total * 100;
+        if (sortMode === 'A') subjects.sort((a, b) => pct(b.code, 'A') - pct(a.code, 'A'));
+        if (sortMode === 'G') subjects.sort((a, b) => pct(b.code, 'G') - pct(a.code, 'G'));
+
+        if (cKomp) { cKomp.destroy(); cKomp = null; }
+        const canvas = el('chartKomposisi');
+        const empty = el('komp-empty');
+        const noData = !subjects.length;
+        if (empty) empty.classList.toggle('hidden', !noData);
+        if (canvas) canvas.parentElement.classList.toggle('hidden', noData);
+
+        const students = Object.values(byStudent);
+        const allA = students.filter(s => s.allA).length;
+        const gps = calculateGPMPValue(kelas, 'ALL', ex, 0, ting);
+        const scope = kelas !== 'ALL' ? kelas : (ting !== 'ALL' ? `Tingkatan ${ting}` : 'Semua murid');
+        el('komp-title').innerText = `${ex} · GPS ${gps === null ? '–' : gps.toFixed(2)} · Semua A ${students.length ? ((allA / students.length) * 100).toFixed(2) : '0.00'}%`;
+        el('komp-subtitle').innerText = `${scope} · Semua A = murid yang mendapat A+, A atau A- dalam semua subjek yang ada gred`;
+        const allAPct = students.length ? (allA / students.length) * 100 : 0;
+        el('komp-kpi-gps').innerText = gps === null ? '–' : gps.toFixed(2);
+        el('komp-kpi-allapct').innerText = allAPct.toFixed(2) + '%';
+        if (noData) return;
+
+        cKomp = new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: subjects.map(s => s.code),
+                datasets: KOMP_GROUPS.map(g => ({
+                    label: g.key,
+                    data: subjects.map(s => +pct(s.code, g.key).toFixed(2)),
+                    _n: subjects.map(s => bySubj[s.code][g.key] || 0),
+                    backgroundColor: g.color,
+                    borderColor: '#ffffff',
+                    borderWidth: 1
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, min: 0, max: 100, ticks: { callback: v => v + '%' }, title: { display: true, text: '% Murid' } }
+                },
+                onClick: (evt, items) => {
+                    if (!items.length) return;
+                    const code = subjects[items[0].index].code;
+                    if (el('gred-subjek')) el('gred-subjek').value = code;
+                    if (el('gred-tingkatan')) { el('gred-tingkatan').value = ting; filterDropdownKelas('gred-tingkatan', 'gred-kelas'); }
+                    if (el('gred-kelas')) el('gred-kelas').value = kelas;
+                    switchTab('gred');
+                },
+                onHover: (evt, items) => { evt.native.target.style.cursor = items.length ? 'pointer' : 'default'; },
+                plugins: {
+                    legend: { position: 'top' },
+                    datalabels: {
+                        display: ctx => ctx.dataset.data[ctx.dataIndex] >= 3,
+                        color: ctx => ['C'].includes(ctx.dataset.label) ? '#1e293b' : '#ffffff',
+                        font: { size: 10, weight: 'bold' },
+                        formatter: v => v.toFixed(1)
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: items => {
+                                const s = subjects[items[0].dataIndex];
+                                return `${s.name} (${bySubj[s.code].total} murid)`;
+                            },
+                            label: c => `${c.dataset.label}: ${c.dataset._n[c.dataIndex]} murid (${c.parsed.y.toFixed(1)}%)`
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     // --- 7. G-RISK & G-ACTION ---
     function escapeCell(v) {
         return String(v ?? '')
@@ -7402,6 +7579,7 @@
         if (t === 'matrix') genMatrix();
         if (t === 'gpmp') genTableGPMP();
         if (t === 'gred') genTableGred();
+        if (t === 'komposisi') genKomposisi();
         if (t === 'list') genList();
         if (t === 'normal') genNormalGraph();
         if (t === 'jurang') genGapAnalysis();
