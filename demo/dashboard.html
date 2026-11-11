@@ -1893,10 +1893,10 @@
                     <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4" id="nm-stats"></div>
                     <div id="nm-spm-wrap" class="hidden mt-8 pt-6 border-t border-slate-200">
                         <div class="flex flex-wrap justify-between items-baseline gap-2 mb-1">
-                            <h3 id="nm-spm-title" class="font-bold text-slate-800 text-base">Taburan Gred SPM</h3>
+                            <h3 id="nm-spm-title" class="font-bold text-slate-800 text-base">Taburan Ikut Gred</h3>
                             <span id="nm-spm-summary" class="text-xs text-slate-500"></span>
                         </div>
-                        <p class="text-[11px] text-slate-500 mb-4">SPM hanya mempunyai gred, jadi taburannya dipaparkan ikut gred dan tidak dibandingkan dengan lengkung markah di atas.</p>
+                        <p class="text-[11px] text-slate-500 mb-4">Markah setiap peperiksaan ditukar kepada gred (ikut jadual gred sekolah) supaya boleh dibandingkan terus dengan SPM. Bar = gred SPM sebenar, garisan = peperiksaan lain. Paksi menegak dalam % murid kerana bilangan murid setiap peperiksaan mungkin berbeza.</p>
                         <div class="h-[300px] w-full relative"><canvas id="chartNormalSpm"></canvas></div>
                     </div>
                 </div>
@@ -5681,25 +5681,33 @@
             return true;
         };
 
-        // SPM hanya ada gred: dipaparkan dalam carta gred berasingan, bukan dalam graf markah.
-        let spmInfo = null;
+        // SPM hanya ada gred: tidak dilukis dalam graf markah. Semua peperiksaan (termasuk SPM)
+        // dipetakan kepada gred dan dibandingkan dalam carta "Taburan Ikut Gred".
+        const gradeSets = [];
+        const countGrades = (grades) => {
+            const counts = {};
+            grades.forEach(g => { if (NM_SPM_GRADES.includes(g)) counts[g] = (counts[g] || 0) + 1; });
+            return counts;
+        };
 
         EXAM_ORD.forEach((ex, idx) => {
             const isSpm = ex === getFinalExamCode() && isSpmCohort();
             const recs = GD.markah.filter(m => m.KOD_EXAM === ex && m.KOD_SUBJEK === s && matchStudent(m));
 
             if (isSpm) {
-                const counts = {};
-                recs.forEach(m => {
-                    const g = String(m.GRED || '').trim().toUpperCase();
-                    if (NM_SPM_GRADES.includes(g)) counts[g] = (counts[g] || 0) + 1;
-                });
-                spmInfo = { label: ex, counts, color: EXAM_COLORS[idx % EXAM_COLORS.length] };
+                const counts = countGrades(recs.map(m => String(m.GRED || '').trim().toUpperCase()));
+                gradeSets.push({ label: ex, counts, color: EXAM_COLORS[idx % EXAM_COLORS.length], isSpm: true });
                 return;
             }
 
             const marks = recs.map(x => toNumericMarkah(x.MARKAH)).filter(v => v !== null);
             if (!marks.length) return;
+            gradeSets.push({
+                label: ex,
+                counts: countGrades(marks.map(v => String(calcG(v) || '').trim().toUpperCase())),
+                color: EXAM_COLORS[idx % EXAM_COLORS.length],
+                isSpm: false
+            });
 
             allMarksGlobal = [...allMarksGlobal, ...marks];
             // ETR ialah target, bukan pencapaian: jangan masukkan dalam Benchmark.
@@ -5726,7 +5734,7 @@
             });
         });
 
-        renderSpmGradeChart(spmInfo);
+        renderGradeChart(gradeSets);
 
         if (!allMarksGlobal.length) {
             if (cN) { cN.destroy(); cN = null; }
@@ -5807,52 +5815,67 @@
     const NM_SPM_GRADES = ['A+', 'A', 'A-', 'B+', 'B', 'C+', 'C', 'D', 'E', 'G'];
     let cNSpm = null;
 
-    function renderSpmGradeChart(info) {
+    function renderGradeChart(sets) {
         const wrap = el('nm-spm-wrap');
         if (!wrap) return;
-        const total = info ? NM_SPM_GRADES.reduce((a, g) => a + (info.counts[g] || 0), 0) : 0;
         if (cNSpm) { cNSpm.destroy(); cNSpm = null; }
-        if (!total) { wrap.classList.add('hidden'); return; }
+        const withTotal = (sets || [])
+            .map(s => ({ ...s, total: NM_SPM_GRADES.reduce((a, g) => a + (s.counts[g] || 0), 0) }))
+            .filter(s => s.total > 0);
+        if (!withTotal.length) { wrap.classList.add('hidden'); return; }
 
         wrap.classList.remove('hidden');
+        const spm = withTotal.find(s => s.isSpm);
         const title = el('nm-spm-title');
-        if (title) title.innerText = `Taburan Gred ${info.label}`;
-        const lulus = total - (info.counts['G'] || 0);
+        if (title) title.innerText = 'Taburan Ikut Gred';
         const summary = el('nm-spm-summary');
-        if (summary) summary.innerText = `${total} murid · Lulus ${lulus} (${((lulus / total) * 100).toFixed(1)}%) · TH tidak dikira`;
+        if (summary) {
+            summary.innerText = spm
+                ? `${spm.label}: ${spm.total} murid · Lulus ${spm.total - (spm.counts['G'] || 0)} (${(((spm.total - (spm.counts['G'] || 0)) / spm.total) * 100).toFixed(1)}%) · TH tidak dikira`
+                : 'Tiada data SPM untuk pilihan ini';
+        }
 
-        const data = NM_SPM_GRADES.map(g => info.counts[g] || 0);
+        const pct = (s, g) => +(((s.counts[g] || 0) / s.total) * 100).toFixed(1);
+        const datasets = withTotal.map(s => {
+            const isTarget = String(s.label).trim().toUpperCase() === 'ETR';
+            if (s.isSpm) {
+                return {
+                    type: 'bar', label: `${s.label} (gred sebenar)`, data: NM_SPM_GRADES.map(g => pct(s, g)),
+                    _counts: s.counts, _total: s.total,
+                    backgroundColor: NM_SPM_GRADES.map(g => g === 'G' ? '#f43f5ecc' : s.color + 'bb'),
+                    borderRadius: 4, order: 2
+                };
+            }
+            return {
+                type: 'line', label: s.label, data: NM_SPM_GRADES.map(g => pct(s, g)),
+                _counts: s.counts, _total: s.total,
+                borderColor: s.color, backgroundColor: s.color,
+                borderWidth: 2, borderDash: isTarget ? [5, 5] : [], pointRadius: 3, tension: 0.3, fill: false, order: 1
+            };
+        });
+
         cNSpm = new Chart(el('chartNormalSpm').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: NM_SPM_GRADES,
-                datasets: [{
-                    label: info.label,
-                    data,
-                    backgroundColor: NM_SPM_GRADES.map(g => g === 'G' ? '#f43f5e' : info.color + 'cc'),
-                    borderRadius: 4
-                }]
-            },
+            data: { labels: NM_SPM_GRADES, datasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
                 scales: {
-                    y: { beginAtZero: true, ticks: { precision: 0 }, title: { display: true, text: 'Bil. Murid' } },
+                    y: { beginAtZero: true, ticks: { callback: v => v + '%' }, title: { display: true, text: '% Murid' } },
                     x: { title: { display: true, text: 'Gred' } }
                 },
                 plugins: {
-                    legend: { display: false },
+                    legend: { position: 'top' },
                     datalabels: {
-                        display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
-                        anchor: 'end',
-                        align: 'end',
-                        offset: 2,
-                        color: '#475569',
-                        font: { size: 10, weight: 'bold' },
-                        formatter: v => `${v} (${((v / total) * 100).toFixed(0)}%)`
+                        display: ctx => ctx.dataset.type === 'bar' && ctx.dataset.data[ctx.dataIndex] > 0,
+                        anchor: 'end', align: 'end', offset: 2,
+                        color: '#475569', font: { size: 10, weight: 'bold' },
+                        formatter: (v, ctx) => `${ctx.dataset._counts[NM_SPM_GRADES[ctx.dataIndex]] || 0} (${Math.round(v)}%)`
                     },
                     tooltip: {
-                        callbacks: { label: c => `${c.parsed.y} murid (${((c.parsed.y / total) * 100).toFixed(1)}%)` }
+                        callbacks: {
+                            label: c => `${c.dataset.label}: ${c.dataset._counts[NM_SPM_GRADES[c.dataIndex]] || 0} murid (${c.parsed.y}%)`
+                        }
                     }
                 },
                 layout: { padding: { top: 18 } }
