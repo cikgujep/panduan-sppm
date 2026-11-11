@@ -5816,6 +5816,8 @@
     let cNSpm = null;
 
     function renderGradeChart(sets) {
+        // Paksi gred dari rendah ke tinggi (G -> A+), selari dengan graf markah 0 -> 100 di atas.
+        const AXIS = [...NM_SPM_GRADES].reverse();
         const wrap = el('nm-spm-wrap');
         if (!wrap) return;
         if (cNSpm) { cNSpm.destroy(); cNSpm = null; }
@@ -5840,14 +5842,14 @@
             const isTarget = String(s.label).trim().toUpperCase() === 'ETR';
             if (s.isSpm) {
                 return {
-                    type: 'bar', label: `${s.label} (gred sebenar)`, data: NM_SPM_GRADES.map(g => pct(s, g)),
+                    type: 'bar', label: `${s.label} (gred sebenar)`, data: AXIS.map(g => pct(s, g)),
                     _counts: s.counts, _total: s.total,
-                    backgroundColor: NM_SPM_GRADES.map(g => g === 'G' ? '#f43f5ecc' : s.color + 'bb'),
+                    backgroundColor: AXIS.map(g => g === 'G' ? '#f43f5ecc' : s.color + 'bb'),
                     borderRadius: 4, order: 2
                 };
             }
             return {
-                type: 'line', label: s.label, data: NM_SPM_GRADES.map(g => pct(s, g)),
+                type: 'line', label: s.label, data: AXIS.map(g => pct(s, g)),
                 _counts: s.counts, _total: s.total,
                 borderColor: s.color, backgroundColor: s.color,
                 borderWidth: 2, borderDash: isTarget ? [5, 5] : [], pointRadius: 3, tension: 0.3, fill: false, order: 1
@@ -5855,7 +5857,7 @@
         });
 
         cNSpm = new Chart(el('chartNormalSpm').getContext('2d'), {
-            data: { labels: NM_SPM_GRADES, datasets },
+            data: { labels: AXIS, datasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -5870,11 +5872,11 @@
                         display: ctx => ctx.dataset.type === 'bar' && ctx.dataset.data[ctx.dataIndex] > 0,
                         anchor: 'end', align: 'end', offset: 2,
                         color: '#475569', font: { size: 10, weight: 'bold' },
-                        formatter: (v, ctx) => `${ctx.dataset._counts[NM_SPM_GRADES[ctx.dataIndex]] || 0} (${Math.round(v)}%)`
+                        formatter: (v, ctx) => `${ctx.dataset._counts[AXIS[ctx.dataIndex]] || 0} (${Math.round(v)}%)`
                     },
                     tooltip: {
                         callbacks: {
-                            label: c => `${c.dataset.label}: ${c.dataset._counts[NM_SPM_GRADES[c.dataIndex]] || 0} murid (${c.parsed.y}%)`
+                            label: c => `${c.dataset.label}: ${c.dataset._counts[AXIS[c.dataIndex]] || 0} murid (${c.parsed.y}%)`
                         }
                     }
                 },
